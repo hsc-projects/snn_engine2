@@ -1,0 +1,10 @@
+cython
+numba>=0.54.1
+numpy>=1.21.1
+pycuda~=2021.1
+pydantic
+pyqt6>=6.2.1
+pyqtdarktheme
+setuptools
+# sortedcontainers
+vispy==0.9.4
