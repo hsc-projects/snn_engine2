@@ -250,7 +250,8 @@ class ScatterPlotSceneCanvas(BaseEngineSceneCanvas):
     def __init__(self,
                  conf: CanvasConfig,
                  app: Optional[Application],
-                 plotting_config: PlottingConfig):
+                 plotting_config: PlottingConfig,
+                 display_time: bool = False):
 
         super().__init__(conf, app)
 
@@ -264,10 +265,10 @@ class ScatterPlotSceneCanvas(BaseEngineSceneCanvas):
         self.plot = ScatterPlotWidget(plotting_confing=plotting_config, height_min=200)
 
         grid.add_widget(self.plot, row=0, row_span=9, col_span=4)
-
-        self.table = TextTableWidget(labels=['t'], height_max_global=25)
-        self.table.height_max = 25
-        grid.add_widget(self.table, 0, 3)
+        if display_time is True:
+            self.table = TextTableWidget(labels=['t'], height_max_global=25)
+            self.table.height_max = 25
+            grid.add_widget(self.table, 0, 3)
         self.freeze()
 
 

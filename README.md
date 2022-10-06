@@ -1,21 +1,18 @@
-# Proposal for an Ant Colony Optimization-like Mechanism for the Association of distant neuronal Subnetworks of spatially extended spiking neural Networks
+# Proposal for an Ant Colony Optimization-like Mechanism for the Association of distant neuronal Assemblies of spatially extended spiking neural Networks
 
 
 
-We propose to utilize the volume surrounding a spatially extended network as an information buffer 
-by combining 3 concepts:
+We propose to utilize the volume surrounding a spatially extended network as an information buffer. 
 
-1. Neurovascular Coupling,
-2. STDP modulation via chemical concentrations,
-3. Neural Concept Cell Assemblies,
-
-in order to solve a special case of the 
+By combining the concepts related to neurovascular coupling, STDP modulation via chemical concentrations, 
+the concept of neural concept cell assemblies,
+we design a mechanism capable of solving a special case of the 
 following 'associativity problem':
 
-    In a spatially extended spiking neural network, associate two chosen, distant cell 
-    assemblies, i.e. increase the strength of synaptic paths between them, such that:
+    In a spatially extended spiking neural network, associate two chosen, distant subnetworks, 
+    i.e. increase the strength of synaptic paths between them, such that:
     (1) high firing rates of neurons of one assembly can reliably cause high firing rates in
-        the other assembly and vice versa,
+        the other subnetwork and vice versa,
     (2) a selection of already existing associations may not be significantly altered.
 
 
@@ -63,25 +60,26 @@ We call the required collection of STDP rules **vascular STDP** or **V-STDP**.
 **V-STDP** may modify synaptic weights both permanently and non-permanently,
 depending on firing rates or local concentrations of chemicals. 
 
-### Memory Groups (TODO: Rename to Concept Cell Assemblies)
+### Neural Concept Cell Assemblies
 
-We (loosely) define **_memory groups_** to be recurrent neural subnetworks characterized 
+We (loosely) define **_neural concept cell assemblies_** (short: _**concept assemblies**_) to be recurrent 
+neural subnetworks characterized 
 by a high density of neurons and occupying a small volume relative to the volume assigned 
 to **seSNN**. 
-We say that a memory group is **_activated_** during a time interval $i$
-if the firing rate of its members does not subceed $r_{m} > 0$ during $i.$
+We say that a concept assembly is **_activated_** during a time interval $i$
+if the firing rate of its members does not subceed $r_{nca} > 0$ during $i.$
 
-**(feature 1)** *memory groups* can not stay active indefinitely.
+**(feature 1)** *Concept assemblies* can not stay active indefinitely.
 
-**(feature 2)** The activation of a _memory group_ significantly reduces the probability 
-of the activation of any other _memory group_. 
+**(feature 2 - Assembly Inhibition)** The activation of a _concept assembly_ significantly reduces the probability 
+of the activation of any other _concept assembly_. 
 
 ### Activation Patterns
 
 We say that an **_activation pattern_** $A' = A'_{N, F, d, r_0, r_1}$ occurs on a set of neurons 
-$N$ during a time interval $i$ of length greater equal $d$, if, during $i$, the firing rate 
+$N$ during a time interval $i$ of length greater equal $d$, if the firing rate 
 of a fixed subset $F \subset N$ does not subceed $r_0 > 0$ and the firing rate of the neurons
-in $N \land F^C$ does not exceed $r_1 \geq 0.$ 
+in $N \land F^C$ does not exceed $r_1 \geq 0$ during $i.$ 
 
 
 ### Network Modules
@@ -90,11 +88,10 @@ The three following listed network modules constitute the neural network of **se
 
 1. _Reservoir_ (**R**): A spatially extended spiking neural network with sensibly chosen 
 distance dependent connection probabilities within a finite volume. 
-**R** partly consists of a number of _memory groups_ spread evenly at random locations. 
-
+**R** partly consists of a number of _concept assemblies_ spread evenly at random locations.
 
 2. _Pattern Layer_ (**PL**): A layer of neurons between **R** and **STMM** (see below).
-We say that an _activation pattern_ $A'$ on **PL** is _**linked**_ to a _memory group_ $A$ 
+We say that an _activation pattern_ $A'$ on **PL** is _**linked**_ to a _concept assembly_ $A$ 
 of **R** if there exists states of **seSNN** such that, 
 in the absence of interference from non-related network activity:
    1. the activation of $A$ reliably causes the occurrence of $A'$,
@@ -103,8 +100,7 @@ in the absence of interference from non-related network activity:
    The network consisting of **R** and **PL** can be trained until multiple 
    such links have been formed.
 
-
-3. _Short-Term Memory Module_ (**STMM**): A special _memory group_ (outside of the volume 
+3. _Short-Term Memory Module_ (**STMM**): A special _concept assembly_ (outside of the volume 
 occupied by **R**) connected to **P**. **STMM** can be trained to associate 
 two _activation patterns_ $A'$ and $B'$ on **PL** in the following way:
 the occurrence of $A'$ triggers the activation of **STMM**, which subsequently causes 
@@ -114,7 +110,7 @@ thereby causing the release of chemicals into **VN** (see bellow).
 
 
 
-![network_modules](./docs_src/readme_images/network_modules.svg)
+![network_modules](./docs_src/readme_images/network_modules.png)
 
 ### Vascular Network
 
@@ -130,14 +126,15 @@ In its original shape, **VN** distributes chemicals approximately evenly in the 
 of all permeable segments. 
 
 
-**(feature 3 - Neurovascular Coupling)** The activation of a *memory group* or neurons with firing rates above a 
-chosen threshold, cause the expansion of adjacent permeable **VN**-segments.
+**(feature 3 - Neurovascular Coupling)** The activation of a *concept assembly* 
+or neurons with firing rates above a chosen threshold, cause the expansion of 
+adjacent permeable **VN**-segments.
 
 
 
-![bvn](./docs_src/readme_images/vn.svg)
+![bvn](./docs_src/readme_images/vn.png)
 
-![bvn](./docs_src/readme_images/vn_permable_segment.svg)
+![bvn](./docs_src/readme_images/vn_permable_segment.png)
 
 
 ## Network States
@@ -145,12 +142,12 @@ chosen threshold, cause the expansion of adjacent permeable **VN**-segments.
 We define 6 possible states for **seSNN**:
 
 1. _**training state**_: in which **R** and **PL** can be trained to form links between 
-activation patterns of **PL** and memory groups of **R**.
+activation patterns of **PL** and concept assemblies of **R**.
 2. _**inference state**_: in which **PL** projects onto **R**, i.e. _activation patterns_ 
-on **PL** cause the activation of the _memory groups_ they are linked to.
+on **PL** cause the activation of the _concept assemblies_ they are linked to.
 3. _**short-term training state**_: in which **STMM** can be trained to link two activations
 patterns of **PL**.
-4. _**dream state**_: in which single *memory groups* are randomly, spontaneously 
+4. _**dream state**_: in which single *concept assemblies* are randomly, spontaneously 
 activated and **PL** projects onto **R** and vice versa. 
 The activation is made possible by introducing a probability for neurons to fire spontaneously. 
 We also assume that patterns on **PL** and group activations on 
@@ -163,7 +160,7 @@ the activation of a group part of a _short-term association_ (see bellow).
 
 ## Associations
 
-Let $A$ and $B$ be two *memory groups*. We say that $A$ and $B$ form an **_association_**, 
+Let $A$ and $B$ be two *concept assemblies*. We say that $A$ and $B$ form an **_association_**, 
 if the activation of $A$ reliably causes the activation of 
 $B$ within a short time interval and vice versa.
 
@@ -171,7 +168,7 @@ $B$ within a short time interval and vice versa.
 ### Long-term Associations
 
 
-We call an association between two _memory groups_ a **_long-term association_**, if
+We call an association between two _concept assemblies_ a **_long-term association_**, if
 the second activation can occur independently of
 **PL** and **STMM**, i.e. only through 
 firing neurons of **R**. 
@@ -180,13 +177,13 @@ firing neurons of **R**.
 
 ### Short Circuit Currents lead to the Formation of long-term Associations
 
-We say that a _**short circuit current**_ occurs between two active *memory groups* 
+We say that a _**short circuit current**_ occurs between two active *concept assemblies* 
 $A$ and $B$, if, only through firing neurons of **R**, both groups cause a 
 prolongation of their respective activation. 
 For a *short circuit current* to occur, there must therefore exist at least one 
 'strong enough' synaptic path from $A$ to $B$ and from $A$ to $B$ respectively.
 
-**(feature 4)** If two _memory groups_ $A$ and $B$ are repeatedly, simultaneously or almost 
+**(feature 4)** If two _concept assemblies_ $A$ and $B$ are repeatedly, simultaneously or almost 
 simultaneously activated, then, a **V-STDP** submechanism may, if effective, via 
 non-permanent synaptic weight changes and given enough time, significantly increase the 
 probability of the occurrence of a short _circuit current between_ $A$ and $B$.
@@ -197,12 +194,12 @@ weight changes to be converted to permanent ones, such that, with a probability 
 a long-term association between both groups has been formed.
 
 
-![short_circuit](./docs_src/readme_images/short_circuit_current.svg)
+![short_circuit](./docs_src/readme_images/short_circuit_current.png)
 
 
 ### Short-term Associations during the Dream State
 
-We say that there is a _**short-term association**_ between two _memory groups_ 
+We say that there is a _**short-term association**_ between two _concept assemblies_ 
 $A$ and $B$, if, while **seSNN** is in the dream state, 
 the activation of $A$ leads to the activation of **STMM** and $B$ via 
 _associated activation patterns_ on **PL** (and vice versa). 
@@ -217,7 +214,7 @@ the simultaneous activation of $A$ and $B$.
 We formulate an associativity problem within the above framework:
 
     Given the existence of a single short-term association within seSNN between two 
-    memory groups A and B of R:
+    concept assemblies A and B of R:
     Design a mechanism to transform the short-term association between A and B into a 
     long-term association between both groups with a probability p0 > 0 and with 
     a probability p1 < 1 of destroying already existing long term associations.
@@ -249,7 +246,7 @@ are affected and strengthened by **V-STDP** in a non-permanent manner.
 spike rates cause the partial transformation of non-permanent synaptic weight changes into 
 permanent ones via **V-STDP**.
 $C_2$ only affects synapses from or to neurons of **R** which are not
-members of _memory groups_. 
+members of _concept assemblies_. 
 
 **(feature 6)** A *short circuit current* between two groups associated via **STMM** 
 causes the deactivation of **STMM** and the subsequent release of $C_2$ into **VN**.
@@ -260,7 +257,7 @@ causes the deactivation of **STMM** and the subsequent release of $C_2$ into **V
 We will define a _**sleep cycle state**_ for **seSNN** which encompasses the 
 _dream-_, _recall-_ and _short-circuit_ states as well as state transitions between them.
 
-![sc_state](./docs_src/readme_images/sleep_state_diagram.svg)
+![sc_state](./docs_src/readme_images/sleep_state_diagram.png)
 
 We extend the _recall state_ by adding the requirement that the activation of **STMM** 
 triggers the release of $C_1$, and thus generates higher $C_1$-concentration 
@@ -278,17 +275,17 @@ Once a short-circuit current occurs,
 the subsequent deactivation of **STMM** causes, according to **feature 7**, 
 the formation of a long-term association with a probability $p_0 > 0$.
 
-![dream_recall](./docs_src/readme_images/dream_recall.svg)
+![dream_recall](./docs_src/readme_images/dream_recall.png)
 
 
-![sc_state](./docs_src/readme_images/short_circuit_state.svg)
+![sc_state](./docs_src/readme_images/short_circuit_state.png)
 
 
 
 ### Idealized Timeline for the _Sleep Cycle State_
 
 
-![sc_state](./docs_src/readme_images/sleep_timeline.svg)
+![sc_state](./docs_src/readme_images/sleep_timeline.png)
 
 
 
@@ -303,15 +300,16 @@ Possible ways to contribute to the reduction of $p_1$:
 * Introducing energy deliveries for neurons through **VN** and incorporating
 energy consumption in the neuronal model.
 * Tuning **seSNN** such that a limited number of synaptic pathways are active at the same time instead 
-of all.
+of all of them.
 * Giving the **STMM** the ability to 'measure' the activity of relevant groups, and 
 thus better time the release of chemicals.
-* Adding a frequency-based subnetwork across **R** and **STMM** as a third layer of information propagation. 
+* Adding a frequency-based subnetwork across **R** and **STMM** as a third layer of information 
+propagation. 
 
-We also ignored the fact that a short circuit might run through more memory groups:
+We also ignored the fact that a short circuit might run through more concept assemblies:
 
 * Allowing 
-more feature-rich, 'bridge building' memory groups could speed up the formation
+more feature-rich, 'bridge building' concept assemblies could speed up the formation
 of a 'first' long-term association, especially for very large reservoirs.
 This first 'mnemonic' long-term association could then be transformed into a 'direct' one 
 through processes inherent to **R** and based on energy consumption minimization.
@@ -374,7 +372,7 @@ Physical Review Letters, 2017.
 Matias J Ison, Rodrigo Quian Quiroga, Itzhak Fried (2015)
 Rapid Encoding of New Memories by Individual Neurons in the Human Brain
 
-Neuronal codes for visual perception and memory (2015)
+Neuronal Codes for visual Perception and Memory (2015)
 
 
 Michael G. Müller, Christos H. Papadimitriou, Wolfgang Maass, and Robert Legenstein (2020)
@@ -382,3 +380,21 @@ Michael G. Müller, Christos H. Papadimitriou, Wolfgang Maass, and Robert Legens
 eNeuro 7 May 2020, 7 (3) ENEURO.0533-19.2020.
 
 ...
+
+
+## Simulator (Work in Progress)
+
+Interactive simulation and visualisation of spatially extended spiking neural networks on the GPU.
+
+
+![sim_main](./docs_src/readme_images/simulator_main.png)
+
+
+
+![sim_main](./docs_src/readme_images/simulator_single_neuron_control.png)
+
+
+![sim_main](./docs_src/readme_images/simulator_multiplots.png)
+
+
+
