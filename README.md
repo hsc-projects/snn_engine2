@@ -237,7 +237,7 @@ we need to guarantee that $C$ is mostly delivered near relevant synapses.
 
 
 1. $C_1$: 
-Increasing the concentration of $C_1$ reduces the firing threshold of neurons of **R** 
+Increasing the concentration of $C_1$ reduces the firing threshold of assembly neurons of **R** 
 and increases their probability of spontaneous firing. Synapses subjected to a $C_1$ 
 concentration above a threshold $c_{C_1}$ and with a spike rate exceeding $r_{C_1}$, 
 are affected and strengthened by **V-STDP** in a non-permanent manner.
@@ -249,7 +249,7 @@ $C_2$ only affects synapses from or to neurons of **R** which are not
 members of _concept assemblies_. 
 
 **(feature 6)** A *short circuit current* between two groups associated via **STMM** 
-causes the deactivation of **STMM** and the subsequent release of $C_2$ into **VN**.
+causes **STMM** to trigger the release of $C_2$ into **VN** .
 
 
 ### New State: _Sleep Cycle State_
