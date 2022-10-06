@@ -301,10 +301,10 @@ Possible ways to contribute to the reduction of $p_1$:
 energy consumption in the neuronal model.
 * Tuning **seSNN** such that a limited number of synaptic pathways are active at the same time instead 
 of all of them.
-* Giving the **STMM** the ability to 'measure' the activity of relevant groups, and 
-thus better time the release of chemicals.
-* Adding a frequency-based subnetwork across **R** and **STMM** as a third layer of information 
-propagation. 
+* Giving the **STMM** the ability to 'measure' the activity of relevant groups 
+in order to improve the timing of chemical releases.
+* Adding a subnetwork across **R** and/or **STMM** as a third layer enabling information 
+propagation via frequency coding. 
 
 We also ignored the fact that a short circuit might run through more concept assemblies:
 
