@@ -9,7 +9,7 @@ from network.network_state import (
     LocationGroupProperties,
     NeuronFlags
 )
-from network.network_structures import NeuronTypeGroup, NeuronTypeGroupConnection, NeuronTypes
+from network.network_structures import NeuronTypes
 from network.network_grid import NetworkGrid
 
 
@@ -48,6 +48,8 @@ class SynapseRepresentation(GPUArrayCollection):
 
         self._config: NetworkConfig = config
         self.curand_states = CuRandStates_ptr
+
+        self.pre_synaptic_rep_initialized = False
 
         self.G_neuron_counts = G_neuron_counts
         self.G_neuron_typed_ccount = G_neuron_typed_ccount
@@ -140,6 +142,8 @@ class SynapseRepresentation(GPUArrayCollection):
                 self.N_rep_pre_synaptic_idcs.type(torch.int64)] != self.N_rep_buffer]) == 0
 
         self.N_rep_buffer[:] = -1
+
+        self.pre_synaptic_rep_initialized = True
     # noinspection PyUnusedLocal
 
     def _fill_syn_counts(self, type_groups, type_group_conns, shapes, G_neuron_counts):

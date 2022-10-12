@@ -228,7 +228,7 @@ if __name__ == '__main__':
     filenames = []
 
     if platform.system() == 'Darwin':
-        dev_path = '/Applications/Xcode.app/Contents/Developer/'
+        dev_path = '/Applications/Xcode.engine/Contents/Developer/'
         lib_dir = dev_path + 'Toolchains/XcodeDefault.xctoolchain/usr/lib/'
         sdk_dir = dev_path + 'Platforms/MacOSX.platform/Developer/SDKs'
         libclang = lib_dir + 'libclang.dylib'

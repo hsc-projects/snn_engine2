@@ -133,7 +133,7 @@ class BaseEngineSceneCanvas(scene.SceneCanvas):
     #     """
     #     if self._backend is not None:
     #         return
-    #     # Make sure that the app is active
+    #     # Make sure that the engine is active
     #     assert self._app.native
     #     # Instantiate the backend with the right class
     #     self.canvas_backend = self._app.backend_module.CanvasBackend(self, **self._backend_kwargs)

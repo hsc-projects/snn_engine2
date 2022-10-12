@@ -1,4 +1,5 @@
 import qdarktheme
+import numba.cuda
 from PyQt6.QtWidgets import QApplication
 from typing import Optional
 from vispy.app import Application, Timer
@@ -10,27 +11,38 @@ from .windows import (
     MainUILeft,
     NeuronInterfaceWindow
 )
-from network import SpikingNeuronNetwork
+from network import SpikingNeuralNetwork
+from network.network_config import PlottingConfig
+from .base_engine_config import EngineConfig
 
 
-class BaseApp(Application):
+class Engine(Application):
 
-    def __init__(self, plotting_config):
+    def __init__(self, config):
 
-        native_app = QApplication([''])
+        self.config: EngineConfig = config
 
-        screens = native_app.screens()
+        self.native_app = QApplication([''])
+
+        screens = self.native_app.screens()
 
         super().__init__(backend_name='pyqt6')
 
-        self.network: Optional[SpikingNeuronNetwork] = None
+        self.network: Optional[SpikingNeuralNetwork] = None
 
-        self._plotting_config = plotting_config
+        self._plotting_config: PlottingConfig = self.config.plotting
         self._group_info_view_mode = self._plotting_config.group_info_view_mode
 
-        native_app.setStyleSheet(qdarktheme.load_stylesheet())
+        self.native_app.setStyleSheet(qdarktheme.load_stylesheet())
 
-        self.main_window: MainWindow = self._init_main_window(screens)
+        self.main_window: MainWindow = MainWindow(name="SNN Engine", app=self, plotting_config=self._plotting_config)
+        self.main_window.setScreen(screens[0])
+
+        if self._group_info_view_mode.split is True:
+            self.main_window.add_group_info_scene_to_splitter(self._plotting_config)
+
+        self.main_window.show()
+        self.main_window.setGeometry(screens[0].availableGeometry())
 
         if self._plotting_config.windowed_neuron_interfaces is True:
             self.interfaced_neurons_window = NeuronInterfaceWindow(parent=self.main_window)
@@ -53,7 +65,6 @@ class BaseApp(Application):
             self.location_group_info_window.show()
             self.group_info_panel = self.location_group_info_window.ui_panel_left
         else:
-            self.location_group_info_window = None
             self.group_info_panel = self.main_window.ui_right
 
         self.time_elapsed_until_last_off = 0
@@ -65,10 +76,13 @@ class BaseApp(Application):
         self.last_g_props_text = None
         self.last_g2g_info_text = None
 
+        # keep order for vbo id (1/2)
         # noinspection PyUnresolvedReferences
-        native_app.aboutToQuit.connect(self.network.unregister_registered_buffers)
-        # noinspection PyUnresolvedReferences
-        native_app.aboutToQuit.connect(self.interfaced_neuron_collection.unregister_registered_buffers)
+        from pycuda import autoinit
+        numba.cuda.select_device(self.config.device)
+        self.network = self.config.network_class(self.config, self)
+        # keep order (3/3)
+        self._bind_ui()
 
     @property
     def actions(self):
@@ -141,117 +155,32 @@ class BaseApp(Application):
     def set_main_context_as_current(self):
         self.main_window.scene_3d.set_current()
 
-    # def set_group_info_context_as_current(self):
-    #     if self._group_info_view_mode.windowed is True:
-    #         self.location_group_info_window.scene_3d.set_current()
-    #     elif self._group_info_view_mode.split is True:
-    #         self.main_window.group_info_scene.set_current()
-    #     else:
-    #         pass
-
-    def _init_main_window(self, screens) -> MainWindow:
-        main_window = MainWindow(name="SNN Engine", app=self, plotting_config=self._plotting_config)
-        main_window.setScreen(screens[0])
-        # main_window.scene_3d.set_current()
-        # for o in self.network.rendered_3d_objs:
-        #     main_window.scene_3d.network_view.add(o)
-
-        # if self._group_info_view_mode.scene is True:
-        #     main_window.scene_3d.group_firings_plot.add(self.network.group_firing_counts_plot)
-
-        # if main_window.scene_3d.group_firings_plot_single0 is not None:
-        #     main_window.scene_3d.group_firings_plot_single0.add(self.network.group_firing_counts_plot_single0)
-        # if main_window.scene_3d.group_firings_plot_single1 is not None:
-        #     main_window.scene_3d.group_firings_plot_single1.add(self.network.group_firing_counts_plot_single1)
-
-        if self._group_info_view_mode.split is True:
-            # keep order for vbo id
-            main_window.add_group_info_scene_to_splitter(self._plotting_config)
-            # keep order for vbo id
-            # main_window.group_info_scene.group_firings_multiplot.add(self.network.group_firing_counts_plot)
-            # main_window.group_info_scene.view.add(self.network.group_info_mesh)
-
-        main_window.show()
-        main_window.setGeometry(screens[0].availableGeometry())
-        return main_window
-
-    # def _init_neuron_plot_window(self):
-    #     neuron_plot_window = MultiNeuronPlotWindow(app=self, plotting_config=self._plotting_config)
-    #     # neuron_plot_window.voltage_plot_sc.set_current()
-    #     # neuron_plot_window.voltage_plot_sc.plot.view.add(network.voltage_plot)
-    #     # neuron_plot_window.scatter_plot_sc.set_current()
-    #     # neuron_plot_window.scatter_plot_sc.plot.view.add(network.firing_scatter_plot)
-    #     neuron_plot_window.show()
-    #     return neuron_plot_window
-
-    # def _init_windowed_group_info(self):
-    #     location_group_info_window =
-    #     return location_group_info_window
-
     def _bind_ui(self):
+
+        self.main_window.scene_3d.network = self.network
+        # noinspection PyUnresolvedReferences
+        self.native_app.aboutToQuit.connect(self.network.unregister_registered_buffers)
+        # noinspection PyUnresolvedReferences
+        self.native_app.aboutToQuit.connect(self.interfaced_neuron_collection.unregister_registered_buffers)
+
         network_config = self.network.network_config
 
         self._connect_main_buttons_and_actions()
 
-        self.main_ui_panel.add_3d_object_sliders(self.network.input_groups)
-        self.main_ui_panel.add_3d_object_sliders(self.network.output_groups)
+        if self.network.input_groups is not None:
+            self.main_ui_panel.add_3d_object_sliders(self.network.input_groups)
+            self.main_ui_panel.sliders.sensory_weight.connect_property(
+                self.network.input_groups,
+                self.network.input_groups.src_weight)
+        if self.network.output_groups is not None:
+            self.main_ui_panel.add_3d_object_sliders(self.network.output_groups)
+
 
         self._connect_g_props_sliders(network_config)
 
-        self.main_ui_panel.sliders.sensory_weight.connect_property(
-            self.network.input_groups,
-            self.network.input_groups.src_weight)
-
         self.connect_group_info_combo_box()
 
-        # self.interfaced_neuron_collection.add_interfaced_neuron(
-        #     network=self.network, app=self, window=self.main_window,
-        #     neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item(), preset='high_pass_filter2')
-        # self.interfaced_neuron_collection.add_interfaced_neuron(
-        #     network=self.network, app=self, window=self.main_window,
-        #     neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item()+1, preset='low_pass_filter2')
-        # self.interfaced_neuron_collection.add_interfaced_neuron(
-        #     network=self.network, app=self, window=self.main_window,
-        #     neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item()+2, preset='high_pass_filter2')
-        # self.interfaced_neuron_collection.add_interfaced_neuron(
-        #     network=self.network, app=self, window=self.main_window,
-        #     neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item()+3, preset='low_pass_filter2')
-
-        self.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self.network, app=self, window=self.main_window,
-            neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item(), preset='tonic_bursting')
-        self.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self.network, app=self, window=self.main_window,
-            neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item()+1, preset='tonic_bursting')
-        self.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self.network, app=self, window=self.main_window,
-            neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item()+2, preset='low_pass_filter2')
-        self.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self.network, app=self, window=self.main_window,
-            neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item()+3, preset='low_pass_filter2')
-        self.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self.network, app=self, window=self.main_window,
-            neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item()+4, preset='high_pass_filter2')
-        self.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self.network, app=self, window=self.main_window,
-            neuron_id=self.network.GPU.G_neuron_typed_ccount[67].item()+5, preset='high_pass_filter2')
-
-        # self.interfaced_neuron_collection.sync_signal(0, 1)
-        # self.interfaced_neuron_collection.sync_signal(2, 3)
-        # self.interfaced_neuron_collection.sync_model_variables(0, 2)
-        self.interfaced_neuron_collection.sync_model_variables(2, 3)
-        self.interfaced_neuron_collection.sync_model_variables(4, 5)
-
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron1'].current_control_frame.sliders.amplitude.set_prop_container_value(50)
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron1'].current_control_frame.sliders.amplitude.actualize_values()
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron2'].current_control_frame.sliders.amplitude.set_prop_container_value(0)
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron2'].current_control_frame.sliders.amplitude.actualize_values()
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron3'].current_control_frame.sliders.amplitude.set_prop_container_value(0)
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron3'].current_control_frame.sliders.amplitude.actualize_values()
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron4'].current_control_frame.sliders.amplitude.set_prop_container_value(0)
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron4'].current_control_frame.sliders.amplitude.actualize_values()
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron5'].current_control_frame.sliders.amplitude.set_prop_container_value(0)
-        self.interfaced_neuron_collection.interfaced_neurons_dct['Neuron5'].current_control_frame.sliders.amplitude.actualize_values()
+        self.network.interface_single_neurons(self)
 
     def connect_group_info_combo_box(self):
         self.group_info_panel.group_ids_combobox().add_items(self.network.group_info_mesh.group_id_texts.keys())
@@ -438,6 +367,6 @@ class BaseApp(Application):
                 # self.main_window.group_info_scene.table.t.text = t
             self.main_window.scene_3d.table.t.text = t_str
             self.main_window.scene_3d.table.update_duration.text = str(self.network.GPU.Simulation.update_duration)
-            update_single_neuron_plots = True
-            if update_single_neuron_plots is True:
+
+            if self.config.update_single_neuron_plots is True:
                 self.interfaced_neuron_collection.update_interfaced_neuron_plots(t)

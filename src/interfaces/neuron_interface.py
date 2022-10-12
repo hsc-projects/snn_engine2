@@ -7,14 +7,14 @@ from signaling.signaling import (
     SignalModel)
 
 from network.visualized_elements.plots import SingleNeuronPlot
-from network.spiking_neural_network import SpikingNeuronNetwork
-from app.content.plot_widgets import SingleNeuronPlotWidget
+from network.spiking_neural_network import SpikingNeuralNetwork
+from engine.content.plot_widgets import SingleNeuronPlotWidget
 from network.network_structures import ModelIDs, NeuronTypes
 
 
 class NeuronInterface:
 
-    def __init__(self, neuron_id, network: SpikingNeuronNetwork,
+    def __init__(self, neuron_id, network: SpikingNeuralNetwork,
                  plot_widget: Optional[SingleNeuronPlotWidget] = None):
 
         self._id = neuron_id

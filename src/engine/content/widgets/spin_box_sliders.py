@@ -7,7 +7,7 @@ from PyQt6 import QtGui, QtCore
 from PyQt6.QtWidgets import QSlider, QDoubleSpinBox, QStyleOptionSpinBox, QStyle, QWidget, QVBoxLayout, QHBoxLayout, \
     QLabel, QFrame
 
-from app.content.widgets.gui_element import GUIElement
+from engine.content.widgets.gui_element import GUIElement
 from interfaces import NeuronInterface
 from network.network_state import LocationGroupProperties
 from rendering import Scale, Translate

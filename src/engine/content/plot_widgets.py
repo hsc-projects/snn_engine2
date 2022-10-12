@@ -2,7 +2,7 @@ from dataclasses import asdict
 import numpy as np
 from vispy.scene import ColorBarWidget
 
-from app.content.widgets.base_plot_widget import AxisVisualConfig, CustomLinkedAxisWidget, BasePlotWidget
+from engine.content.widgets.base_plot_widget import AxisVisualConfig, CustomLinkedAxisWidget, BasePlotWidget
 from network import PlottingConfig
 
 

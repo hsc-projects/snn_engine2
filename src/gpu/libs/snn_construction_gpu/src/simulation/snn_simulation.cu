@@ -292,6 +292,7 @@ SnnSimulation::SnnSimulation(
 	firing_counts_write = firing_counts;
 
 	G_stdp_config0 = G_stdp_config0_;
+	G_stdp_config_current = G_stdp_config0;
 	G_stdp_config1 = G_stdp_config1_;
 
 	G_avg_weight_inh = G_avg_weight_inh_;
@@ -426,7 +427,7 @@ __global__ void update_current_(
 			idx = n + N * s;
 			snk_N = N_rep[idx];
 
-			if (snk_N >= 0)
+			if (snk_N >= 0)  // allows to delete synapses by placing -1
 			{
 				snk_G = N_flags[snk_N + N_flags_row_group * N];
 				//snk_G_is_sensory = G_flags[snk_G + row_b_sensory_input * G] == 1;

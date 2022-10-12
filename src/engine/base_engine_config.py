@@ -1,34 +1,13 @@
 from dataclasses import dataclass
-import numba.cuda
-from vispy import gloo
-import sys
+from typing import Type
 
 from network import (
     NetworkInitValues,
     NetworkConfig,
     PlottingConfig,
-    SpikingNeuronNetwork
+    SpikingNeuralNetwork
 )
-from app import BaseApp
 
-# TODO: pre-synaptic delays
-# TODO: resonant cells/groups,
-# TODO: better sensory weights,
-# TODO: filter-cells,
-# TODO: group_info_mesh face sizes
-# TODO: better stdp G2G config
-# TODO: monitor learning
-# TODO: weird synapse counts
-# TODO: low neuron count swaps
-# TODO: performance hit above 300K neurons
-
-# TODO (optional) gpu side group_info_mesh face color actualization
-# TODO (optional) group selection via selector box
-# TODO (optional, difficult) group selection via click
-
-
-# TODO: configurable segmentation
-# tODO: subgroups
 
 class EngineConfig:
 
@@ -70,31 +49,5 @@ class EngineConfig:
                               group_info_view_mode='split',
                               network_config=network)
 
-
-class Engine(BaseApp):
-
-    def __init__(self, config=None):
-
-        # noinspection PyUnresolvedReferences
-        from pycuda import autoinit
-
-        self.config = EngineConfig() if config is None else config
-
-        numba.cuda.select_device(self.config.device)
-
-        # keep order for vbo id (1/4)
-        super().__init__(self.config.plotting)
-        # keep order for vbo id (2/4)
-        self.network = SpikingNeuronNetwork(self.config)
-        # keep order for vbo id (3/4)
-        self.network.initialize_GPU_arrays(self.config.device, self)
-        # keep order (4/4)
-        self._bind_ui()
-
-
-if __name__ == '__main__':
-
-    gloo.gl.use_gl('gl+')
-    eng = Engine()
-    if sys.flags.interactive != 1:
-        eng.run()
+    network_class: Type[SpikingNeuralNetwork] = None
+    update_single_neuron_plots: bool = False

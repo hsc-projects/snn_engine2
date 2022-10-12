@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict
+from .network_grid import NetworkGrid
 import numpy as np
 from typing import Optional, Union
 
@@ -62,6 +63,8 @@ class NetworkConfig:
 
     InitValues: NetworkInitValues = NetworkInitValues()
 
+    grid: Optional[NetworkGrid] = None
+
     def __str__(self):
         name = self.__class__.__name__
         line = '-' * len(name)
@@ -111,6 +114,9 @@ class NetworkConfig:
 
         self.swap_tensor_shape_multiplicators: tuple = (self.S, 10)
 
+        if self.grid is None:
+            self.grid = NetworkGrid(self)
+
 
 @dataclass(frozen=True)
 class PlotViewModeOption:
@@ -148,6 +154,12 @@ class PlottingConfig:
 
     network_config: NetworkConfig
 
+    has_voltage_multiplot: bool = True
+    has_firing_scatterplot: bool = True
+    has_group_firings_multiplot: bool = True
+    has_group_firings_plot0: bool = True
+    has_group_firings_plot1: bool = True
+
     windowed_multi_neuron_plots: bool = True
     windowed_neuron_interfaces: bool = True
     group_info_view_mode: Optional[Union[PlotViewModeOption, str]] = 'split'
@@ -157,6 +169,10 @@ class PlottingConfig:
     _max_n_scatter_plots: int = 1000
 
     def __post_init__(self):
+
+        if self.windowed_multi_neuron_plots is True:
+            assert self.has_voltage_multiplot
+            assert self.has_firing_scatterplot
 
         if isinstance(self.group_info_view_mode, str):
             self.group_info_view_mode = PlotViewModeOption(self.group_info_view_mode)

@@ -14,15 +14,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from app.content.widgets.combobox_frame import ComboBoxFrame, G2GInfoDualComboBoxFrame
-from app.content.widgets.gui_element import (
+from engine.content.widgets.combobox_frame import ComboBoxFrame, G2GInfoDualComboBoxFrame
+from engine.content.widgets.gui_element import (
     ButtonMenuAction
 )
-from app.content.widgets.rendered_object_collapsible import RenderedObjectCollapsible
+from engine.content.widgets.rendered_object_collapsible import RenderedObjectCollapsible
 from .neuron_properties_collapsible import SingleNeuronCollapsible, SingleNeuronCollapsibleContainer
-from app.content.widgets.collapsible_widget.collapsible_widget import CollapsibleWidget
+from engine.content.widgets.collapsible_widget.collapsible_widget import CollapsibleWidget
 from .widgets.spin_box_sliders import SpinBoxSlider
-from network import SpikingNeuronNetwork, PlottingConfig
+from network import SpikingNeuralNetwork, PlottingConfig
 from network.network_state import MultiModelNeuronStateTensor
 
 
@@ -187,7 +187,7 @@ class NeuronsCollapsible(CollapsibleWidget, SingleNeuronCollapsibleContainer):
         CollapsibleWidget.__init__(self, title=title, parent=parent)
         SingleNeuronCollapsibleContainer.__init__(self)
 
-    def add_interfaced_neuron(self, network: SpikingNeuronNetwork, app,
+    def add_interfaced_neuron(self, network: SpikingNeuralNetwork, app,
                               title=None, neuron_model=MultiModelNeuronStateTensor,
                               neuron_id: Optional[int] = None, preset=None, window=None):
         neuron_collapsible = super().add_interfaced_neuron(
@@ -379,7 +379,7 @@ class NeuronInterfacePanel(UIPanel, SingleNeuronCollapsibleContainer):
             self.layout().addWidget(frame)
             self.frame_cols.append(frame)
 
-    def add_interfaced_neuron(self, network: SpikingNeuronNetwork, app,
+    def add_interfaced_neuron(self, network: SpikingNeuralNetwork, app,
                               title=None, neuron_model=MultiModelNeuronStateTensor,
                               neuron_id: Optional[int] = None, preset=None, window=None,
                               frame_column=None):

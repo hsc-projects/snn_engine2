@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 
 from vispy.app import Application
 
-from app.content.scenes import (
+from engine.content.scenes import (
     MainSceneCanvas,
     LocationGroupInfoCanvas,
     ScatterPlotSceneCanvas,

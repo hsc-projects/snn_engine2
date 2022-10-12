@@ -3,8 +3,8 @@ from typing import Optional
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import QLabel, QWidget, QVBoxLayout
 
-from app.content.widgets.collapsible_widget.collapsible_widget import CollapsibleWidget
-from app.content.widgets.spin_box_sliders import SpinBoxSlider, SubCollapsibleFrame
+from engine.content.widgets.collapsible_widget.collapsible_widget import CollapsibleWidget
+from engine.content.widgets.spin_box_sliders import SpinBoxSlider, SubCollapsibleFrame
 from rendering import RenderedObjectNode
 
 

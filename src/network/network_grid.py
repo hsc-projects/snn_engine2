@@ -1,8 +1,8 @@
-from dataclasses import dataclass
+# from dataclasses import dataclass
 import numpy as np
 
 from geometry import grid_coordinates, validate_pos, DirectedObject
-from .network_config import NetworkConfig
+# from .network_config import NetworkConfig
 
 
 class GridMovements(DirectedObject):
@@ -23,7 +23,7 @@ class GridMovements(DirectedObject):
 
 class NetworkGrid:
 
-    def __init__(self, config: NetworkConfig):
+    def __init__(self, config):
 
         self.config = config
         self.segmentation = self._segmentation(config.grid_segmentation)

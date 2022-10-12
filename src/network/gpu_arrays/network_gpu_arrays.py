@@ -53,14 +53,9 @@ class NetworkGPUArrays(GPUArrayCollection):
 
         self._voltage_multiplot: VoltageMultiPlot = voltage_multiplot
         self._firing_scatter_plot: FiringScatterPlot = firing_scatter_plot
-        self._group_firing_counts_plot_single1_tensor = group_firing_counts_plot_single1.vbo_array.tensor
+        if group_firing_counts_plot_single1 is not None:
+            self._group_firing_counts_plot_single1_tensor = group_firing_counts_plot_single1.vbo_array.tensor
 
-        # self.plotting_arrays = PlottingGPUArrays(plotting_config,
-        #                                          device=device, shapes=shapes, buffers=buffers,
-        #                                          bprint_allocated_memory=self.bprint_allocated_memory,
-        #                                          app=app)
-
-        # self.registered_buffers += self.plotting_arrays.registered_buffers
         self.curand_states = self._curand_states()
         self.N_pos: RegisteredVBO = self._N_pos(shape=shapes.N_pos, vbo=neurons.vbo)
 
@@ -68,12 +63,6 @@ class NetworkGPUArrays(GPUArrayCollection):
 
         (self.G_neuron_counts,
          self.G_neuron_typed_ccount) = self._N_G_and_G_neuron_counts_1of2(shapes, grid, neurons)
-
-        # self.N_flags.type = self.N_G[:, self._config.N_G_neuron_type_col]
-        # self.N_flags.group = self.N_G[:, self._config.N_G_group_id_col]
-
-        # self.neuron_ids = torch.arange(config.N).to(device=self.device)
-        # self.group_ids = torch.arange(config.G).to(device=self.device)
 
         self.group_indices = None
 
@@ -120,52 +109,9 @@ class NetworkGPUArrays(GPUArrayCollection):
 
         self.G_firing_count_hist = self.izeros((self._plotting_config.scatter_plot_length, self._config.G))
 
-        self.G_stdp_config0 = self.izeros((self._config.G, self._config.G))
-        self.G_stdp_config1 = self.izeros((self._config.G, self._config.G))
+        self.lookup_output_tensor = self.fzeros(6)
 
         self.Simulation = self._init_sim(T, plotting_config)
-
-        if self._config.N >= 8000:
-            self.synapse_arrays.swap_group_synapses(
-                groups=torch.from_numpy(grid.forward_groups).to(device=self.device).type(torch.int64))
-
-        self.synapse_arrays.actualize_N_rep_pre_synaptic_idx(shapes=shapes)
-
-        # self.N_states.use_preset('RS', self.N_flags.select_by_groups(self._config.sensory_groups))
-        self.N_states.izhikevich_neurons.use_preset('RS', self.N_flags.select_by_groups(self._config.sensory_groups))
-
-        self.Simulation.set_stdp_config(0)
-
-        self.synapse_arrays.N_rep_buffer = self.synapse_arrays.N_rep_buffer.reshape(shapes.N_rep)
-        # self.N_rep_buffer[:] = self.N_rep_groups_cpu.to(self.device)
-
-        self.Simulation.calculate_avg_group_weight()
-
-        self.output_tensor = self.fzeros(6)
-
-        n0 = self.G_neuron_typed_ccount[67]
-
-        self.N_flags.model[n0 + 2] = 1
-        self.N_flags.model[n0 + 3] = 1
-        self.N_flags.model[n0 + 4] = 1
-        self.N_flags.model[n0 + 5] = 1
-
-        self.synapse_arrays.N_rep[0, n0] = n0 + 2
-        self.synapse_arrays.N_rep[0, n0 + 1] = n0 + 3
-        self.synapse_arrays.N_rep[1, n0] = n0 + 4
-        self.synapse_arrays.N_rep[1, n0 + 1] = n0 + 5
-
-        # self.N_weights[0, n0] = 1.5
-        # self.N_weights[0, n0 + 1] = 1.5
-        # self.N_weights[1, n0] = 1.5
-        # self.N_weights[1, n0 + 1] = 1.5
-
-        # self.N_flags.model[self.G_neuron_typed_ccount[67] + 2] = 1
-        # self.N_flags.model[self.G_neuron_typed_ccount[67] + 3] = 1
-
-        self.synapse_arrays.make_sensory_groups(
-            G_neuron_counts=self.G_neuron_counts, N_pos=self.N_pos, G_pos=self.G_pos,
-            groups=self._config.sensory_groups, grid=grid)
 
     def _init_sim(self, T, plotting_config):
 
@@ -217,12 +163,17 @@ class NetworkGPUArrays(GPUArrayCollection):
 
         return sim
 
+    def _post_synapse_mod_init(self, shapes):
+        self.synapse_arrays.actualize_N_rep_pre_synaptic_idx(shapes=shapes)
+        self.synapse_arrays.N_rep_buffer = self.synapse_arrays.N_rep_buffer.reshape(shapes.N_rep)
+        self.Simulation.calculate_avg_group_weight()
+
     # noinspection PyUnusedLocal
     def look_up(self, tuples, input_tensor, output_tensor=None, precision=6):
         if output_tensor is None:
-            if len(self.output_tensor) != len(tuples):
-                self.output_tensor = self.fzeros(len(tuples))
-            output_tensor = self.output_tensor
+            if len(self.lookup_output_tensor) != len(tuples):
+                self.lookup_output_tensor = self.fzeros(len(tuples))
+            output_tensor = self.lookup_output_tensor
         output_tensor[:] = torch.nan
         for i, e in enumerate(tuples):
             output_tensor[i] = input_tensor[e]
@@ -360,9 +311,6 @@ class NetworkGPUArrays(GPUArrayCollection):
         self._voltage_multiplot.actualize_group_separator_lines(separator_mask, n_voltage_plots)
         self._firing_scatter_plot.actualize_group_separator_lines(separator_mask, n_voltage_plots)
 
-    # def redirect_synapses(self, groups, direction, rate):
-    #     pass
-
     @property
     def active_sensory_groups(self):
         return self.select_groups(self.G_flags.b_sensory_input.type(torch.bool))
@@ -372,54 +320,5 @@ class NetworkGPUArrays(GPUArrayCollection):
         return self.select_groups(self.G_flags.b_output_group.type(torch.bool))
 
     def update(self):
-
-        if self.Simulation.t % 100 == 0:
-            print('t =', self.Simulation.t)
-        if self.Simulation.t % 1000 == 0:
-            # if False:
-            self.Simulation.calculate_avg_group_weight()
-            a = self.to_dataframe(self.g2g_info_arrays.G_avg_weight_inh)
-            b = self.to_dataframe(self.g2g_info_arrays.G_avg_weight_exc)
-            r = 6
-            # self.look_up([(80, 72), (88, 80), (96, 88), (104, 96), (112, 104)],
-            # self.G_stdp_config0.type(torch.float32))
-            # self.look_up([(80, 72), (88, 80), (96, 88), (104, 96), (112, 104)], self.G_avg_weight_inh)
-            # self.look_up([(80, 72), (88, 80), (96, 88), (104, 96), (112, 104)], self.G_avg_weight_exc)
-            # print()
-            self.look_up([(75, 67), (83, 75), (91, 83), (99, 91), (107, 99), (115, 107), (123, 115)],
-                         self.g2g_info_arrays.G_avg_weight_inh)
-            self.look_up([(75, 67), (83, 75), (91, 83), (99, 91), (107, 99), (115, 107), (123, 115)],
-                         self.g2g_info_arrays.G_avg_weight_exc)
-            print()
-
-        n_updates = self._config.sim_updates_per_frame
-
-        t_mod = self.Simulation.t % self._plotting_config.scatter_plot_length
-
-        if self._config.debug is False:
-
-            for i in range(n_updates):
-                # if self._config.debug is False:
-                self.Simulation.update(self._config.stdp_active, self._config.debug)
-                # if self.Simulation.t >= 2100:
-                #     self.debug = True
-        else:
-            a = self.to_dataframe(self.Firing_idcs)
-            b = self.to_dataframe(self.Firing_times)
-            c = self.to_dataframe(self.Firing_counts)
+        for i in range(self._config.sim_updates_per_frame):
             self.Simulation.update(self._config.stdp_active, False)
-
-        # print(self.G_firing_count_hist.flatten()[67 + (self.Simulation.t-1) * self._config.G])
-
-        self._group_firing_counts_plot_single1_tensor[
-            t_mod: t_mod + n_updates, 1] = \
-            self.G_firing_count_hist[t_mod: t_mod + n_updates, 123] / self.G_neuron_counts[1, 123]
-
-        offset1 = self._plotting_config.scatter_plot_length
-
-        self._group_firing_counts_plot_single1_tensor[
-            offset1 + t_mod: offset1 + t_mod + n_updates, 1] = \
-            self.G_firing_count_hist[t_mod: t_mod + n_updates, 125] / self.G_neuron_counts[1, 125]
-
-        if t_mod + n_updates + 1 >= self._plotting_config.scatter_plot_length:
-            self.G_firing_count_hist[:] = 0

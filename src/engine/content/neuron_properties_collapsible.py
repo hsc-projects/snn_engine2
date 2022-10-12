@@ -7,21 +7,21 @@ from PyQt6.QtWidgets import (
 )
 from typing import Optional, Union, Type
 
-from app.content.widgets.collapsible_widget.collapsible_widget import CollapsibleWidget
+from engine.content.widgets.collapsible_widget.collapsible_widget import CollapsibleWidget
 from .widgets.spin_box_sliders import SpinBoxSlider, SubCollapsibleFrame, SliderCollection
-from app.content.widgets.combobox_frame import ComboBoxFrame
+from engine.content.widgets.combobox_frame import ComboBoxFrame
 from .scenes import SingleNeuronPlotCanvas
 from interfaces import NeuronInterface
 
-from network import SpikingNeuronNetwork
+# from network import SpikingNeuralNetwork
 from network.network_state import (
     MultiModelNeuronStateTensor,
     IzhikevichModel,
     RulkovModel,
     StateRow)
-from app.content.widgets.scene_canvas_frame import SceneCanvasFrame, CanvasConfig
+from engine.content.widgets.scene_canvas_frame import SceneCanvasFrame, CanvasConfig
 from signaling import SignalModel, BaseSignalVariable
-from network import SpikingNeuronNetwork, PlottingConfig
+from network import SpikingNeuralNetwork, PlottingConfig
 
 
 class NeuronIDFrame(SubCollapsibleFrame):
@@ -179,7 +179,7 @@ class SingleNeuronPlotCollapsible(CollapsibleWidget):
 
 class SingleNeuronCollapsible(CollapsibleWidget):
 
-    def __init__(self, parent, network: SpikingNeuronNetwork,
+    def __init__(self, parent, network: SpikingNeuralNetwork,
                  title, window, app,
                  neuron_model: Union[Type[IzhikevichModel],
                                      Type[RulkovModel],
@@ -259,7 +259,7 @@ class SingleNeuronCollapsibleContainer:
     def interfaced_neurons_list(self):
         return list(self.interfaced_neurons_dct.values())
 
-    def add_interfaced_neuron(self, network: SpikingNeuronNetwork, app,
+    def add_interfaced_neuron(self, network: SpikingNeuralNetwork, app,
                               title=None,
                               neuron_model=MultiModelNeuronStateTensor,
                               neuron_id: Optional[int] = None, preset=None, window=None,

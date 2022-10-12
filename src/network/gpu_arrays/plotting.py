@@ -11,7 +11,7 @@
 #                  device, shapes: NetworkArrayShapes,
 #                  buffers: BufferCollection,
 #                  bprint_allocated_memory,
-#                  app):
+#                  engine):
 #
 #         super().__init__(device=device, bprint_allocated_memory=bprint_allocated_memory)
 #
@@ -19,7 +19,7 @@
 #         self.registered_buffers = []
 #         self.shapes = shapes
 #
-#         app.main_window.scene_3d.set_current()
+#         engine.main_window.scene_3d.set_current()
 #
 #         if buffers.group_firing_counts_plot_single0 is not None:
 #             self.group_firing_counts_plot_single0 = RegisteredVBO(buffers.group_firing_counts_plot_single0,

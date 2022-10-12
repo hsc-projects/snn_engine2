@@ -2,11 +2,10 @@ import numpy as np
 import pandas as pd
 import torch
 from typing import Dict, Optional
-from vispy.scene import visuals
 
 from .network_config import (
     NetworkConfig,
-    PlottingConfig, BufferCollection
+    PlottingConfig
 )
 from .network_array_shapes import NetworkArrayShapes
 from network.gpu_arrays.network_gpu_arrays import NetworkGPUArrays
@@ -30,52 +29,49 @@ from network.visualized_elements import (
     # GroupFiringCountsPlot0,
     GroupFiringCountsPlot
 )
-from .network_state.izhikevich_model import IzhikevichModel
+# from .network_state.izhikevich_model import IzhikevichModel
 from .network_grid import NetworkGrid
 
 
 from signaling import SignalCollection
 
-# from app import App
+# from engine import App
 
 
 # noinspection PyPep8Naming
-class NetworkCPUArrays:
+# class NetworkCPUArrays:
+#
+#     def __init__(self, config: NetworkConfig, gpu_arrays: NetworkGPUArrays):
+#
+#         self._config = config
+#         self.gpu = gpu_arrays
+#
+#         self.N_rep: np.array = gpu_arrays.synapse_arrays.N_rep.cpu()
+#         # self.N_G: np.array = gpu_arrays.N_G.cpu()
+#
+#         # self.group_indices: np.array = gpu_arrays.group_indices.cpu()
+#
+#         self.N_rep_groups: np.array = self.gpu.synapse_arrays.N_rep_groups_cpu
+#
+#     @staticmethod
+#     def to_dataframe(tensor: torch.Tensor):
+#         return pd.DataFrame(tensor.numpy())
 
-    def __init__(self, config: NetworkConfig, gpu_arrays: NetworkGPUArrays):
 
-        self._config = config
-        self.gpu = gpu_arrays
+class SpikingNeuralNetwork:
 
-        self.N_rep: np.array = gpu_arrays.synapse_arrays.N_rep.cpu()
-        # self.N_G: np.array = gpu_arrays.N_G.cpu()
-
-        # self.group_indices: np.array = gpu_arrays.group_indices.cpu()
-
-        self.N_rep_groups: np.array = self.gpu.synapse_arrays.N_rep_groups_cpu
-
-    @staticmethod
-    def to_dataframe(tensor: torch.Tensor):
-        return pd.DataFrame(tensor.numpy())
-
-
-class SpikingNeuronNetwork:
     # noinspection PyPep8Naming
-    def __init__(self,
-                 config,
-                 model=IzhikevichModel):
+    def __init__(self, config, app):
 
         # RenderedObjectNode._grid_unit_shape = network_config.grid_unit_shape
 
         self.T = config.T
         self.network_config: NetworkConfig = config.network
         self._plotting_config: PlottingConfig = config.plotting
-
+        self.grid: NetworkGrid = config.network.grid
         self.signal_collection = SignalCollection()
 
-        self.grid = NetworkGrid(self.network_config)
         print('\n', self.network_config, '\n')
-        self.model = model
         self.max_batch_size_mb = config.max_batch_size_mb
 
         self.type_group_dct: Dict[int, NeuronTypeGroup] = {}
@@ -101,7 +97,7 @@ class SpikingNeuronNetwork:
         self._neurons = Neurons(self.network_config, self.grid.segmentation, self.type_groups)
 
         self.GPU: Optional[NetworkGPUArrays] = None
-        self.CPU: Optional[NetworkCPUArrays] = None
+        # self.CPU: Optional[NetworkCPUArrays] = None
 
         self.outer_grid: Optional[OuterGrid] = None
         self.voltage_plot: Optional[VoltageMultiPlot] = None
@@ -111,9 +107,9 @@ class SpikingNeuronNetwork:
         self.group_firing_counts_plot_single0: Optional[GroupFiringCountsPlot] = None
         self.group_firing_counts_plot_single1: Optional[GroupFiringCountsPlot] = None
 
-        self.selected_group_boxes: Optional[SelectedGroups] = None
         self.input_groups: Optional[InputGroups] = None
         self.output_groups: Optional[OutputGroups] = None
+        self.selected_group_boxes: Optional[SelectedGroups] = None
 
         self.group_info_mesh: Optional[GroupInfo] = None
 
@@ -124,8 +120,12 @@ class SpikingNeuronNetwork:
                                               plotting_config=self.plotting_config,
                                               n_neuron_types=len(NeuronTypes))
         self.registered_buffers = []
-        # self.initialize_rendered_objs()
         self.validate()
+
+        self.initialize_GPU_arrays(config.device, app)
+
+        if self.GPU.synapse_arrays.pre_synaptic_rep_initialized is False:
+            raise AssertionError
 
     @property
     def plotting_config(self):
@@ -212,121 +212,21 @@ class SpikingNeuronNetwork:
         self.GPU.update()
 
     # noinspection PyPep8Naming
-    def initialize_GPU_arrays(self, device, app):
+    def initialize_GPU_arrays(self, device, engine):
 
-        app.set_main_context_as_current()
+        engine.set_main_context_as_current()
 
-        app.main_window.scene_3d.network_view.add(self._neurons)
+        engine.main_window.scene_3d.network_view.add(self._neurons)
 
         self.outer_grid: OuterGrid = OuterGrid(
-            view=app.main_window.scene_3d.network_view,
+            view=engine.main_window.scene_3d.network_view,
             shape=self.network_config.N_pos_shape,
             segments=self.network_config.grid_segmentation)
 
-        # if not self._all_rendered_objects_initialized:
-        #     raise AssertionError('not self._all_rendered_objects_initialized')
-
-        self.voltage_plot = VoltageMultiPlot(
-            scene=app.voltage_multiplot_scene,
-            view=app.voltage_multiplot_view,
-            device=device,
-            n_plots=self.plotting_config.n_voltage_plots,
-            plot_length=self.plotting_config.voltage_plot_length,
-            n_group_separator_lines=self.data_shapes.n_group_separator_lines
-        )
-
-        self.firing_scatter_plot = FiringScatterPlot(
-            scene=app.firing_scatter_plot_scene,
-            view=app.firing_scatter_plot_view,
-            device=device,
-            n_plots=self.plotting_config.n_scatter_plots,
-            plot_length=self.plotting_config.scatter_plot_length,
-            n_group_separator_lines=self.data_shapes.n_group_separator_lines
-        )
-
-        self.group_firing_counts_multiplot = GroupFiringCountsPlot(
-            scene=app.group_info_scene,
-            view=app.group_firings_multiplot_view,
-            device=device,
-            n_plots=self.network_config.G,
-            plot_length=self.plotting_config.scatter_plot_length,
-            n_groups=self.network_config.G)
-
-        self.group_firing_counts_plot_single0 = GroupFiringCountsPlot(
-            scene=app.main_window.scene_3d,
-            view=app.main_window.scene_3d.group_firings_plot_single0,
-            device=device,
-            n_plots=2,
-            plot_length=self.plotting_config.scatter_plot_length,
-            n_groups=0)
-
-        self.group_firing_counts_plot_single1 = GroupFiringCountsPlot(
-            scene=app.main_window.scene_3d,
-            view=app.main_window.scene_3d.group_firings_plot_single1,
-            device=device,
-            n_plots=2,
-            plot_length=self.plotting_config.scatter_plot_length,
-            n_groups=0,
-            color=[[1., 0., 0., 1.], [0., 1., 0., 1.]]
-        )
-
-        app.set_main_context_as_current()
-
-        self.selected_group_boxes = SelectedGroups(
-            scene=app.main_window.scene_3d,
-            view=app.main_window.scene_3d.network_view,
-            network_config=self.network_config, grid=self.grid,
-            connect=np.zeros((self.network_config.G + 1, 2)) + self.network_config.G,
-            device=device,
-        )
-
-        self.GPU = NetworkGPUArrays(
-            config=self.network_config,
-            grid=self.grid,
-            neurons=self._neurons,
-            type_group_dct=self.type_group_dct,
-            type_group_conn_dct=self.type_group_conn_dict,
-            device=device,
-            T=self.T,
-            shapes=self.data_shapes,
-            plotting_config=self.plotting_config,
-            voltage_multiplot=self.voltage_plot,
-            firing_scatter_plot=self.firing_scatter_plot,
-            selected_group_boxes=self.selected_group_boxes,
-            group_firing_counts_plot_single1=self.group_firing_counts_plot_single1
-        )
-
-        self.registered_buffers += self.GPU.registered_buffers
-
-        self.selected_group_boxes.init_cuda_attributes(G_flags=self.GPU.G_flags, G_props=self.GPU.G_props)
-
-        self.group_info_mesh = GroupInfo(
-            scene=app.group_info_scene,
-            view=app.group_info_view,
-            network_config=self.network_config, grid=self.grid,
-            connect=np.zeros((self.network_config.G + 1, 2)) + self.network_config.G,
-            device=device, G_flags=self.GPU.G_flags, G_props=self.GPU.G_props,
-            g2g_info_arrays=self.GPU.g2g_info_arrays
-        )
-        app.set_main_context_as_current()
-
-        self.CPU = NetworkCPUArrays(self.network_config, self.GPU)
-
-        self.add_input_groups(scene=app.main_window.scene_3d, view=app.main_window.scene_3d.network_view)
-        self.add_output_groups(scene=app.main_window.scene_3d, view=app.main_window.scene_3d.network_view)
-
-        print('\nactive_sensory_groups:', self.GPU.active_sensory_groups)
-        print('active_output_groups:', self.GPU.active_output_groups, '\n')
+    def interface_single_neurons(self, engine):
+        pass
 
     def unregister_registered_buffers(self):
         for rb in self.registered_buffers:
             rb.unregister()
-        self.voltage_plot.unregister_registered_buffers()
-        self.firing_scatter_plot.unregister_registered_buffers()
-        self.selected_group_boxes.unregister_registered_buffers()
 
-        self.group_info_mesh.unregister_registered_buffers()
-
-        self.group_firing_counts_multiplot.unregister_registered_buffers()
-        self.group_firing_counts_plot_single0.unregister_registered_buffers()
-        self.group_firing_counts_plot_single1.unregister_registered_buffers()
