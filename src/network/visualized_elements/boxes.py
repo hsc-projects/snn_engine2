@@ -2,7 +2,7 @@ from dataclasses import asdict
 import numpy as np
 from numpy.lib import recfunctions as rfn
 import torch
-from typing import Optional
+from typing import Optional, Union
 
 from vispy.color import Colormap, get_colormap
 from vispy.geometry import create_box
@@ -15,6 +15,7 @@ from network.network_state.state_tensor import (
 )
 from network.network_state.location_group_states import LocationGroupFlags, G2GInfoArrays, LocationGroupProperties
 from rendering import (
+    Box,
     Translate,
     BoxSystemLineVisual,
     InteractiveBoxNormals,
@@ -23,7 +24,7 @@ from rendering import (
     RenderedCudaObjectNode,
     GridArrow
 )
-from gpu import RegisteredVBO
+from gpu import RegisteredVBO, GPUArrayCollection
 from network.network_grid import NetworkGrid
 from network.visualized_elements.group_mesh_visual import GroupMeshVisual
 
@@ -32,7 +33,7 @@ from network.visualized_elements.group_mesh_visual import GroupMeshVisual
 class SelectorBox(RenderedCudaObjectNode):
     count: int = 0
 
-    def __init__(self, network_config: NetworkConfig, grid: NetworkGrid, parent=None, name=None):
+    def __init__(self, network_config: NetworkConfig, grid: NetworkGrid, scene, parent=None, name=None):
         self.name = name or f'{self.__class__.__name__}{SelectorBox.count}'
 
         self._select_children: list[GridArrow] = []
@@ -55,7 +56,7 @@ class SelectorBox(RenderedCudaObjectNode):
         super().__init__([self._visual], selectable=True, parent=parent)
 
         self.unfreeze()
-
+        self._scene = scene
         self.transform = STTransform()
         self.transform.translate = (self.shape[0] / 2, self.shape[1] / 2, self.shape[2] / 2)
         self.transform.scale = [1.1, 1.1, 1.1]
@@ -66,15 +67,15 @@ class SelectorBox(RenderedCudaObjectNode):
         self.interactive = True
         self.scale = Scale(self, _min_value=0, _max_value=int(3 * 1 / min(self.shape)))
         self.translate = Translate(self, _grid_unit_shape=self.shape, _min_value=-5, _max_value=5)
+        self.map_window_keys()
+
         self.G_flags: Optional[LocationGroupFlags] = None
         self.G_props: Optional[LocationGroupProperties] = None
 
         # noinspection PyPep8Naming
-        G = self.network_config.G
+        self.selected_masks = np.zeros((self.network_config.G, 4), dtype=np.int32, )
 
-        self.selected_masks = np.zeros((G, 4), dtype=np.int32, )
-
-        self.group_numbers = np.arange(G)  # .reshape((G, 1))
+        self.group_numbers = np.arange(self.network_config.G)  # .reshape((G, 1))
 
         self.selection_flag = 'b_thalamic_input'
 
@@ -141,6 +142,9 @@ class SelectorBox(RenderedCudaObjectNode):
         self.swap_select_color(v)
         self._visual.normals.visible = v
 
+        if v is True:
+            self.map_window_keys()
+
     # noinspection PyMethodOverriding
     def init_cuda_attributes(self, device, G_flags: LocationGroupFlags, G_props: LocationGroupProperties):
         super().init_cuda_attributes(device)
@@ -152,12 +156,26 @@ class SelectorBox(RenderedCudaObjectNode):
         for normal in self._visual.normals:
             self.registered_buffers.append(normal.gpu_array)
 
+    def map_window_keys(self):
+        self._scene.events.key_press.disconnect()
+        self._scene.set_keys({
+            'left': self.translate.mv_left,
+            'right': self.translate.mv_right,
+            'up': self.translate.mv_fw,
+            'down': self.translate.mv_bw,
+            'pageup': self.translate.mv_up,
+            'pagedown': self.translate.mv_down,
+        })
+
 
 # noinspection PyAbstractClass
-class GroupBoxesBase(RenderedCudaObjectNode):
+class GroupBoxesBase(RenderedCudaObjectNode, GPUArrayCollection):
 
     def __init__(self, network_config: NetworkConfig, grid: NetworkGrid,
-                 connect, color=(0.1, 1., 1., 1.), other_visuals=None):
+                 connect, device, color=(0.1, 1., 1., 1.), other_visuals=None):
+
+        GPUArrayCollection.__init__(self, device)
+
         if other_visuals is None:
             other_visuals = []
         self._visual = BoxSystemLineVisual(grid_unit_shape=grid.unit_shape,
@@ -165,7 +183,7 @@ class GroupBoxesBase(RenderedCudaObjectNode):
                                            connect=connect,
                                            pos=grid.pos, color=color)
         self.grid = grid
-        super().__init__([self.visual] + other_visuals)
+        RenderedCudaObjectNode.__init__(self, [self.visual] + other_visuals)
 
         # noinspection PyTypeChecker
         self.set_gl_state(polygon_offset_fill=True,
@@ -176,7 +194,7 @@ class GroupBoxesBase(RenderedCudaObjectNode):
         self.unfreeze()
         self.G_flags: Optional[LocationGroupFlags] = None
         self.G_props: Optional[LocationGroupProperties] = None
-        self.g2g_info_arrays : Optional[G2GInfoArrays] = None
+        self.g2g_info_arrays: Optional[G2GInfoArrays] = None
         self.freeze()
 
     @property
@@ -200,8 +218,16 @@ class GroupBoxesBase(RenderedCudaObjectNode):
 # noinspection PyAbstractClass
 class GroupInfo(GroupBoxesBase):
 
-    def __init__(self, network_config: NetworkConfig, grid: NetworkGrid,
-                 connect, color=(0.1, 1., 1., 1.)):
+    def __init__(self,
+                 scene,
+                 view,
+                 network_config: NetworkConfig, grid: NetworkGrid,
+                 connect,
+                 device, G_flags: LocationGroupFlags, G_props: LocationGroupProperties,
+                 g2g_info_arrays: Optional[G2GInfoArrays] = None,
+                 color=(0.1, 1., 1., 1.)):
+
+        scene.set_current()
 
         self._mesh: GroupMeshVisual = GroupMeshVisual(
             network_config, grid, '+z', grid.grid_coord,
@@ -251,6 +277,7 @@ class GroupInfo(GroupBoxesBase):
 
         super().__init__(network_config=network_config, grid=grid,
                          connect=connect, color=color,
+                         device=device,
                          other_visuals=[self._mesh,
                                         self.group_id_text_visual,
                                         self.G_flags_text_visual,
@@ -269,6 +296,13 @@ class GroupInfo(GroupBoxesBase):
         self.G2G_info_cache: Optional[dict] = {}
         self.group_ids_gpu: Optional[torch.Tensor] = None
         self.freeze()
+
+        view.add(self)
+        scene._draw_scene()
+
+        self.init_cuda_attributes(
+            device=self.device,
+            G_flags=G_flags, G_props=G_props, g2g_info_arrays=g2g_info_arrays)
 
     @staticmethod
     def _init_txt_visual(state_tensor: StateTensor, cache: dict, text_collection: dict, visual: TextVisual):
@@ -412,8 +446,11 @@ class GroupInfo(GroupBoxesBase):
 # noinspection PyAbstractClass
 class SelectedGroups(GroupBoxesBase):
 
-    def __init__(self, network_config: NetworkConfig, grid: NetworkGrid,
-                 connect, color=(0.1, 1., 1., 1.)):
+    def __init__(self, scene, view, network_config: NetworkConfig, grid: NetworkGrid,
+                 connect,
+                 device,
+                 # G_flags: LocationGroupFlags, G_props: LocationGroupProperties,
+                 color=(0.1, 1., 1., 1.)):
 
         self._output_planes: GroupMeshVisual = GroupMeshVisual(
             network_config, grid, '+z', grid.output_grid_coord)
@@ -421,13 +458,18 @@ class SelectedGroups(GroupBoxesBase):
             network_config, grid, '-y', grid.sensory_grid_coord)
 
         super().__init__(network_config=network_config, grid=grid,
-                         connect=connect, color=color,
+                         connect=connect, device=device, color=color,
                          other_visuals=[self._sensory_input_planes, self._output_planes])
 
         self.unfreeze()
         self._input_color_array: Optional[RegisteredVBO] = None
         self._output_color_array: Optional[RegisteredVBO] = None
         self.freeze()
+
+        view.add(self)
+        scene._draw_scene()
+
+        # self.init_cuda_attributes(G_flags=G_flags, G_props=G_props)
 
     def init_cuda_arrays(self):
         self._input_color_array = self._sensory_input_planes.face_color_array(self._cuda_device)
@@ -438,8 +480,8 @@ class SelectedGroups(GroupBoxesBase):
         self.registered_buffers.append(self._output_color_array)
 
     # noinspection PyMethodOverriding
-    def init_cuda_attributes(self, device, G_flags: LocationGroupFlags, G_props: LocationGroupProperties):
-        super().init_cuda_attributes(device, G_flags=G_flags, G_props=G_props, g2g_info_arrays=None)
+    def init_cuda_attributes(self, G_flags: LocationGroupFlags, G_props: LocationGroupProperties):
+        super().init_cuda_attributes(self.device, G_flags=G_flags, G_props=G_props, g2g_info_arrays=None)
         self.G_props.input_face_colors = self._input_color_array.tensor
         self.G_props.output_face_colors = self._output_color_array.tensor
 
@@ -751,8 +793,8 @@ class InputGroups(IOGroups):
         self.network.GPU.actualize_plot_map(
             self.network_config.sensory_groups[self.io_neuron_group_values_gpu.cpu() != -1])
 
-        self.network.GPU.plotting_arrays.voltage.map()
-        self.network.GPU.plotting_arrays.firings.map()
+        self.network.GPU._voltage_multiplot.vbo_array.map()
+        self.network.GPU._firing_scatter_plot.vbo_array.map()
 
     @property
     def src_weight(self):
@@ -790,5 +832,24 @@ class OutputGroups(IOGroups):
         self.network.GPU.actualize_plot_map(
             self.network_config.output_groups[self.io_neuron_group_values_gpu.cpu() != -1])
 
-        self.network.GPU.plotting_arrays.voltage.map()
-        self.network.GPU.plotting_arrays.firings.map()
+        self.network.GPU._voltage_multiplot.vbo_array.map()
+        self.network.GPU._firing_scatter_plot.vbo_array.map()
+
+
+class OuterGrid(Box):
+
+    def __init__(self,
+                 view,
+                 shape: tuple,
+                 segments: tuple,
+                 edge_color: Union[str, tuple] = 'white'):
+
+        super().__init__(shape=shape, segments=segments, scale=[.99, .99, .99],
+                         edge_color=edge_color, depth_test=False,
+                         border_width=1, interactive=False,
+                         use_parent_transform=False)
+        self.visible = False
+
+        self.set_gl_state(cull_face=False, blend=True)
+
+        view.add(self)

@@ -59,6 +59,10 @@ class ButtonMenuActions:
                                                           menu_short_cut='Ctrl+G',
                                                           checkable=True)
 
+    ADD_SELECTOR_BOX: ButtonMenuAction = ButtonMenuAction(menu_name='&Add SelectorBox',
+                                                          name='Add SelectorBox',
+                                                          status_tip='Add SelectorBox')
+
     ACTUALIZE_G_FLAGS_TEXT: ButtonMenuAction = ButtonMenuAction(menu_name='&Refresh displayed G_flags',
                                                                 menu_short_cut='F7',
                                                                 icon_name='arrow-circle.png',
@@ -119,6 +123,8 @@ class MenuBar(QMenuBar):
             self.toggle_outergrid: QAction = ButtonMenuActions.TOGGLE_OUTERGRID.action()
             self.exit: QAction = ButtonMenuActions.EXIT_APP.action()
 
+            self.add_selector_box: QAction = ButtonMenuActions.ADD_SELECTOR_BOX.action()
+
             self.toggle_groups_ids: QAction = ButtonMenuActions.TOGGLE_GROUP_IDS_TEXT.action()
             self.toggle_g_flags: QAction = ButtonMenuActions.TOGGLE_G_FLAGS_TEXT.action()
             self.toggle_g_props: QAction = ButtonMenuActions.TOGGLE_G_PROPS_TEXT.action()
@@ -140,6 +146,9 @@ class MenuBar(QMenuBar):
         self.file_menu.addAction(self.actions.start)
         self.file_menu.addAction(self.actions.pause)
         self.file_menu.addAction(self.actions.exit)
+
+        self.objects_menu = self.addMenu('&Objects')
+        self.objects_menu.addAction(self.actions.add_selector_box)
 
         self.view_menu = self.addMenu('&View')
         self.view_menu.addAction(self.actions.toggle_outergrid)
@@ -198,6 +207,7 @@ class MainUILeft(UIPanel):
             self.start: QPushButton = ButtonMenuActions.START_SIMULATION.button()
             self.pause: QPushButton = ButtonMenuActions.PAUSE_SIMULATION.button()
             self.exit: QPushButton = ButtonMenuActions.EXIT_APP.button()
+            self.add_selector_box: QPushButton = ButtonMenuActions.ADD_SELECTOR_BOX.button()
             self.toggle_outergrid: QPushButton = ButtonMenuActions.TOGGLE_OUTERGRID.button()
 
             self.toggle_outergrid.setMinimumWidth(max_width)
@@ -290,6 +300,7 @@ class MainUILeft(UIPanel):
         self.addWidget(self.sensory_input_collapsible)
         self.addWidget(self.thalamic_input_collapsible)
 
+        self.addWidget(self.buttons.add_selector_box)
         self.addWidget(self.objects_collapsible)
 
         self.addWidget(self.buttons.exit)
@@ -298,9 +309,9 @@ class MainUILeft(UIPanel):
         # self.plotting_config: Optional[PlottingConfig] = plotting_config
 
     def add_3d_object_sliders(self, obj):
-
-        collapsible = RenderedObjectCollapsible(obj, self)
+        collapsible = RenderedObjectCollapsible(obj, self.window, self)
         self.objects_collapsible.add(collapsible)
+        return collapsible
 
 
 class GroupInfoPanel(UIPanel):

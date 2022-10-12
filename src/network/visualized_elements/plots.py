@@ -1,10 +1,11 @@
 import numpy as np
+import torch
 from typing import Optional
 from vispy.scene import visuals
 # from vispy.visualized_elements.transforms import STTransform
 
 from rendering import RenderedObjectNode, RenderedCudaObjectNode, CudaLine
-from gpu import RegisteredVBO
+from gpu import RegisteredVBO, GPUArrayCollection
 
 
 class PlotData:
@@ -37,9 +38,10 @@ class PlotData:
 
 
 # noinspection PyAbstractClass
-class BaseMultiPlot:
+class BaseMultiPlot0:
 
-    def __init__(self, n_plots, plot_length, n_group_separator_lines, group_line_offset_left,
+    def __init__(self,
+                 n_plots, plot_length, n_group_separator_lines, group_line_offset_left,
                  group_separator_line_width=1):
 
         self.plot_data = PlotData(n_plots, plot_length, n_group_separator_lines, group_line_offset_left)
@@ -61,16 +63,94 @@ class BaseMultiPlot:
         return RenderedObjectNode.buffer_id(self.group_lines_pos_vbo_glir_id)
 
     @property
-    def group_lines_color_vbo(self):
+    def group_lines_colors_vbo(self):
         return RenderedObjectNode.buffer_id(self.group_lines_color_vbo_glir_id)
 
 
 # noinspection PyAbstractClass
-class VoltagePlot(RenderedObjectNode, BaseMultiPlot):
+class BaseMultiPlot(GPUArrayCollection):
 
-    def __init__(self, n_plots, plot_length, n_group_separator_lines):
+    def __init__(self,
+                 device, scene,
+                 n_plots, plot_length, n_group_separator_lines, group_line_offset_left,
+                 group_separator_line_width=1):
+        scene.set_current()
 
-        BaseMultiPlot.__init__(self, n_plots, plot_length, n_group_separator_lines, 2)
+        super().__init__(device=device, bprint_allocated_memory=n_plots > 100)
+
+        self.plot_data = PlotData(n_plots, plot_length, n_group_separator_lines, group_line_offset_left)
+
+        self.group_separator_lines = visuals.Line(pos=self.plot_data.group_separators_pos,
+                                                  color=self.plot_data.group_separators_color,
+                                                  connect='segments', width=group_separator_line_width)
+
+        self.map = self.izeros(n_plots)
+        self.map[:] = torch.arange(n_plots)
+
+        self.plot_slots = torch.arange(n_plots + 1, device=self.device)
+
+        self.vbo_array: Optional[RegisteredVBO] = None
+        self.group_lines_pos_array: Optional[RegisteredVBO] = None
+        self.group_lines_colors_array: Optional[RegisteredVBO] = None
+        self.registered_buffers = []
+
+    def init_plot_arrays(self,
+                         scene,
+                         view,
+                         plot_shape, group_lines_pos_shape,
+                         group_line_colors_shape):
+        view.add(self)
+        scene._draw_scene()
+        self.vbo_array = RegisteredVBO(self.vbo, plot_shape, self.device)
+
+        self.group_lines_pos_array = RegisteredVBO(self.group_lines_pos_vbo,
+                                                   group_lines_pos_shape,
+                                                   self.device)
+        self.group_lines_colors_array = RegisteredVBO(self.group_lines_colors_vbo,
+                                                      group_line_colors_shape,
+                                                      self.device)
+        self.registered_buffers.append(self.vbo_array)
+        self.registered_buffers.append(self.group_lines_pos_array)
+        self.registered_buffers.append(self.group_lines_colors_array)
+
+    @property
+    def group_lines_pos_vbo_glir_id(self):
+        return self.group_separator_lines._line_visual._pos_vbo.id
+
+    @property
+    def group_lines_color_vbo_glir_id(self):
+        return self.group_separator_lines._line_visual._color_vbo.id
+
+    @property
+    def group_lines_pos_vbo(self):
+        return RenderedObjectNode.buffer_id(self.group_lines_pos_vbo_glir_id)
+
+    @property
+    def group_lines_colors_vbo(self):
+        return RenderedObjectNode.buffer_id(self.group_lines_color_vbo_glir_id)
+
+    def actualize_group_separator_lines(self, separator_mask, n_plots):
+
+        separator_mask_ = separator_mask[: min(n_plots + 1, self.plot_slots[-1] + 1)].clone()
+        separator_mask_[-1] = True
+        separators = (self.plot_slots[: len(separator_mask_)][separator_mask_]
+                      .repeat_interleave(2).to(torch.float32))
+
+        separators = separators[: min(len(separators), self.group_lines_pos_array.tensor.shape[0])]
+        self.group_lines_pos_array.tensor[:len(separators), 1] = separators
+        self.group_lines_colors_array.tensor[:, 3] = 0
+        self.group_lines_colors_array.tensor[:len(separators), 3] = 1
+
+
+# noinspection PyAbstractClass
+class VoltageMultiPlot(RenderedObjectNode, BaseMultiPlot):
+
+    def __init__(self, scene, view,
+                 device,
+                 n_plots, plot_length, n_group_separator_lines):
+
+        BaseMultiPlot.__init__(self, device, scene,
+                               n_plots, plot_length, n_group_separator_lines, 2)
 
         connect = np.ones(plot_length).astype(bool)
         connect[-1] = False
@@ -82,6 +162,10 @@ class VoltagePlot(RenderedObjectNode, BaseMultiPlot):
                                                antialias=False, width=1, parent=None)
 
         RenderedObjectNode.__init__(self, [self._obj, self.group_separator_lines])
+        self.init_plot_arrays(scene=scene, view=view,
+                              plot_shape=(n_plots * plot_length, 2),
+                              group_lines_pos_shape=(2 * n_group_separator_lines, 2),
+                              group_line_colors_shape=(2 * n_group_separator_lines, 4))
 
     @property
     def vbo_glir_id(self):
@@ -91,9 +175,12 @@ class VoltagePlot(RenderedObjectNode, BaseMultiPlot):
 # noinspection PyAbstractClass
 class FiringScatterPlot(RenderedObjectNode, BaseMultiPlot):
 
-    def __init__(self, n_plots, plot_length, n_group_separator_lines):
+    def __init__(self, scene, view,
+                 device,
+                 n_plots, plot_length, n_group_separator_lines):
 
-        BaseMultiPlot.__init__(self, n_plots, plot_length, n_group_separator_lines, 20)
+        BaseMultiPlot.__init__(self, device, scene,
+                               n_plots, plot_length, n_group_separator_lines, 20)
 
         self.plot_data.color[:, 3] = 0
 
@@ -107,6 +194,11 @@ class FiringScatterPlot(RenderedObjectNode, BaseMultiPlot):
 
         RenderedObjectNode.__init__(self, [self.group_separator_lines, self._obj])
 
+        self.init_plot_arrays(scene=scene, view=view,
+                              plot_shape=(n_plots * plot_length, 2),
+                              group_lines_pos_shape=(2 * n_group_separator_lines, 2),
+                              group_line_colors_shape=(2 * n_group_separator_lines, 4))
+
     @property
     def vbo_glir_id(self):
         # noinspection PyProtectedMember
@@ -116,9 +208,12 @@ class FiringScatterPlot(RenderedObjectNode, BaseMultiPlot):
 # noinspection PyAbstractClass
 class GroupFiringCountsPlot(RenderedObjectNode, BaseMultiPlot):
 
-    def __init__(self, n_plots, plot_length, n_groups, color=None):
+    def __init__(self, device, view, scene, n_plots, plot_length, n_groups, color=None):
 
-        BaseMultiPlot.__init__(self, n_plots, plot_length, n_groups + 1, 2)
+        BaseMultiPlot.__init__(self,
+                               device, scene,
+                               n_plots, plot_length,
+                               n_group_separator_lines=n_groups + 1, group_line_offset_left=2)
 
         if color is not None:
             if isinstance(color, list):
@@ -139,9 +234,20 @@ class GroupFiringCountsPlot(RenderedObjectNode, BaseMultiPlot):
 
         RenderedObjectNode.__init__(self, [self._obj, self.group_separator_lines])
 
+        self.init_plot_arrays(scene, view, (plot_length * n_plots, 2))
+
     @property
     def vbo_glir_id(self):
         return self._obj._line_visual._pos_vbo.id
+
+    def init_plot_arrays(self,
+                         scene,
+                         view,
+                         plot_shape, **kwargs):
+        view.add(self)
+        scene._draw_scene()
+        self.vbo_array = RegisteredVBO(self.vbo, plot_shape, self.device)
+        self.registered_buffers.append(self.vbo_array)
 
 
 # noinspection PyAbstractClass

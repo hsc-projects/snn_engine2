@@ -79,12 +79,12 @@ class MainSceneCanvas(BaseEngineSceneCanvas):
             self.scatter_plot = None
 
         if plotting_config.group_info_view_mode.scene is True:
-            self.group_firings_plot = GroupFiringsPlotWidget(plotting_confing=plotting_config)
-            self.grid.add_widget(self.group_firings_plot, plot_row1, plot_col1, col_span=col_span0, row_span=row_span10)
+            self.group_firings_multiplot = GroupFiringsPlotWidget(plotting_confing=plotting_config)
+            self.grid.add_widget(self.group_firings_multiplot, plot_row1, plot_col1, col_span=col_span0, row_span=row_span10)
             self.color_bar = GroupInfoColorBar()
             self.grid.add_widget(self.color_bar, plot_row1, plot_col0 + col_span0, row_span10, 1)
         else:
-            self.group_firings_plot = None
+            self.group_firings_multiplot = None
 
         self.group_firings_plot_single0 = BasePlotWidget(
             title="Group Firings: XXX",
@@ -292,9 +292,9 @@ class LocationGroupInfoCanvas(BaseEngineSceneCanvas):
             self.table.height_max = 25
             self.grid.add_widget(self.table, 0, 6)
 
-        self.group_firings_plot = GroupFiringsPlotWidget(plotting_confing=plotting_config, width_max=600)
+        self.group_firings_multiplot = GroupFiringsPlotWidget(plotting_confing=plotting_config, width_max=600)
 
-        self.grid.add_widget(self.group_firings_plot, 5, 5, col_span=2, row_span=6)
+        self.grid.add_widget(self.group_firings_multiplot, 5, 5, col_span=2, row_span=6)
 
         self.color_bar = GroupInfoColorBar()
         self.grid.add_widget(self.color_bar, 5, 0, 6, 1)

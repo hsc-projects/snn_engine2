@@ -1,10 +1,10 @@
-import numpy as np
+# import numpy as np
 import torch
 
-from network.gpu_arrays.plotting import PlottingGPUArrays
+# from network.gpu_arrays.plotting import PlottingGPUArrays
 from network.gpu_arrays.synapses import SynapseRepresentation
 from network.network_array_shapes import NetworkArrayShapes
-from network.network_config import BufferCollection, NetworkConfig, PlottingConfig
+from network.network_config import NetworkConfig, PlottingConfig
 from network.network_state import (
     LocationGroupFlags,
     G2GInfoArrays,
@@ -13,7 +13,7 @@ from network.network_state import (
 )
 from network.network_structures import NeuronTypeGroup, NeuronTypeGroupConnection, NeuronTypes
 from network.network_grid import NetworkGrid
-from network.visualized_elements.neurons import Neurons
+from network.visualized_elements import Neurons, VoltageMultiPlot, FiringScatterPlot, GroupFiringCountsPlot
 
 # noinspection PyUnresolvedReferences
 from gpu import (
@@ -38,8 +38,10 @@ class NetworkGPUArrays(GPUArrayCollection):
                  T: int,
                  shapes: NetworkArrayShapes,
                  plotting_config: PlottingConfig,
-                 buffers: BufferCollection,
-                 app,
+                 voltage_multiplot: VoltageMultiPlot,
+                 firing_scatter_plot: FiringScatterPlot,
+                 selected_group_boxes,
+                 group_firing_counts_plot_single1: GroupFiringCountsPlot
                  ):
 
         super().__init__(device=device, bprint_allocated_memory=config.N > 1000)
@@ -49,16 +51,18 @@ class NetworkGPUArrays(GPUArrayCollection):
         self._type_group_dct = type_group_dct
         self._type_group_conn_dct = type_group_conn_dct
 
-        self.registered_buffers = []
+        self._voltage_multiplot: VoltageMultiPlot = voltage_multiplot
+        self._firing_scatter_plot: FiringScatterPlot = firing_scatter_plot
+        self._group_firing_counts_plot_single1_tensor = group_firing_counts_plot_single1.vbo_array.tensor
 
-        self.plotting_arrays = PlottingGPUArrays(plotting_config,
-                                                 device=device, shapes=shapes, buffers=buffers,
-                                                 bprint_allocated_memory=self.bprint_allocated_memory,
-                                                 app=app)
+        # self.plotting_arrays = PlottingGPUArrays(plotting_config,
+        #                                          device=device, shapes=shapes, buffers=buffers,
+        #                                          bprint_allocated_memory=self.bprint_allocated_memory,
+        #                                          app=app)
 
-        self.registered_buffers += self.plotting_arrays.registered_buffers
+        # self.registered_buffers += self.plotting_arrays.registered_buffers
         self.curand_states = self._curand_states()
-        self.N_pos: RegisteredVBO = self._N_pos(shape=shapes.N_pos, vbo=buffers.N_pos)
+        self.N_pos: RegisteredVBO = self._N_pos(shape=shapes.N_pos, vbo=neurons.vbo)
 
         self.N_flags: NeuronFlags = NeuronFlags(n_neurons=self._config.N, device=self.device)
 
@@ -73,11 +77,11 @@ class NetworkGPUArrays(GPUArrayCollection):
 
         self.group_indices = None
 
-        self.G_pos: RegisteredVBO = RegisteredVBO(buffers.selected_group_boxes_vbo, shapes.G_pos, self.device)
+        self.G_pos: RegisteredVBO = RegisteredVBO(selected_group_boxes.vbo, shapes.G_pos, self.device)
         self.registered_buffers.append(self.G_pos)
 
         self.G_flags = LocationGroupFlags(self._config.G, device=self.device, grid=grid,
-                                          select_ibo=buffers.selected_group_boxes_ibo, N_flags=self.N_flags)
+                                          select_ibo=selected_group_boxes.ibo, N_flags=self.N_flags)
         self.registered_buffers.append(self.G_flags.selected_array)
 
         self.g2g_info_arrays = G2GInfoArrays(self._config, self.G_flags.group_ids,
@@ -159,7 +163,7 @@ class NetworkGPUArrays(GPUArrayCollection):
         # self.N_flags.model[self.G_neuron_typed_ccount[67] + 2] = 1
         # self.N_flags.model[self.G_neuron_typed_ccount[67] + 3] = 1
 
-        self.synapse_arrays.make_sensory_group(
+        self.synapse_arrays.make_sensory_groups(
             G_neuron_counts=self.G_neuron_counts, N_pos=self.N_pos, G_pos=self.G_pos,
             groups=self._config.sensory_groups, grid=grid)
 
@@ -173,12 +177,12 @@ class NetworkGPUArrays(GPUArrayCollection):
             T=T,
             n_voltage_plots=plotting_config.n_voltage_plots,
             voltage_plot_length=plotting_config.voltage_plot_length,
-            voltage_plot_data=self.plotting_arrays.voltage.data_ptr(),
-            voltage_plot_map=self.plotting_arrays.voltage_map.data_ptr(),
+            voltage_plot_data=self._voltage_multiplot.vbo_array.data_ptr(),
+            voltage_plot_map=self._voltage_multiplot.map.data_ptr(),
             n_scatter_plots=plotting_config.n_scatter_plots,
             scatter_plot_length=plotting_config.scatter_plot_length,
-            scatter_plot_data=self.plotting_arrays.firings.data_ptr(),
-            scatter_plot_map=self.plotting_arrays.firings_map.data_ptr(),
+            scatter_plot_data=self._firing_scatter_plot.vbo_array.data_ptr(),
+            scatter_plot_map=self._firing_scatter_plot.map.data_ptr(),
             curand_states_p=self.curand_states,
             N_pos=self.N_pos.data_ptr(),
             # N_G=self.N_G.data_ptr(),
@@ -303,26 +307,6 @@ class NetworkGPUArrays(GPUArrayCollection):
         self.registered_buffers.append(N_pos)
         return N_pos
 
-    # def _G_pos(self, shape, vbo) -> RegisteredVBO:
-    #     # groups = torch.arange(self._config.G, device=self.device)
-    #     # z = (groups / (self._config.G_shape[0] * self._config.G_shape[1])).floor()
-    #     # r = groups - z * (self._config.G_shape[0] * self._config.G_shape[1])
-    #     # y = (r / self._config.G_shape[0]).floor()
-    #     # x = r - y * self._config.G_shape[0]
-    #     #
-    #     # gpos = torch.zeros(shape, dtype=torch.float32, device=self.device)
-    #     #
-    #     # gpos[:, 0] = x * (self._config.N_pos_shape[0] / self._config.G_shape[0])
-    #     # gpos[:, 1] = y * (self._config.N_pos_shape[1] / self._config.G_shape[1])
-    #     # gpos[:, 2] = z * (self._config.N_pos_shape[2] / self._config.G_shape[2])
-    #
-    #     G_pos = RegisteredVBO.from_buffer(
-    #         vbo, config=GPUArrayConfig(shape=shape, strides=(shape[1] * 4, 4),
-    #                                    dtype=np.float32, device=self.device))
-    #
-    #     # self.validate_N_G()
-    #     return G_pos
-
     def set_src_group_weights(self, groups, w):
         selected = self.N_flags.select_by_groups(groups)
         self.synapse_arrays.N_weights[:, selected] = w
@@ -347,19 +331,6 @@ class NetworkGPUArrays(GPUArrayCollection):
     def select_groups(self, mask):
         return self.G_flags.group_ids[mask]
 
-    @staticmethod
-    def actualize_group_separator_lines(plot_slots_tensor, pos_tensor, color_tensor, separator_mask, n_plots):
-
-        separator_mask_ = separator_mask[: min(n_plots + 1, plot_slots_tensor[-1] + 1)].clone()
-        separator_mask_[-1] = True
-        separators = (plot_slots_tensor[: len(separator_mask_)][separator_mask_]
-                      .repeat_interleave(2).to(torch.float32))
-
-        separators = separators[: min(len(separators), pos_tensor.shape[0])]
-        pos_tensor[:len(separators), 1] = separators
-        color_tensor[:, 3] = 0
-        color_tensor[:len(separators), 3] = 1
-
     def actualize_plot_map(self, groups):
         # selected_neurons = self.neuron_ids[self.selected_neuron_mask(groups)]
         selected_neurons = self.N_flags.select_ids_by_groups(groups)
@@ -367,10 +338,10 @@ class NetworkGPUArrays(GPUArrayCollection):
         n_selected = len(selected_neurons)
 
         n_voltage_plots = min(n_selected, self._plotting_config.n_voltage_plots)
-        self.plotting_arrays.voltage_map[: n_voltage_plots] = selected_neurons[: n_voltage_plots]
+        self._voltage_multiplot.map[: n_voltage_plots] = selected_neurons[: n_voltage_plots]
 
         n_scatter_plots = min(n_selected, self._plotting_config.n_scatter_plots)
-        self.plotting_arrays.firings_map[: n_scatter_plots] = selected_neurons[: n_scatter_plots]
+        self._firing_scatter_plot.map[: n_scatter_plots] = selected_neurons[: n_scatter_plots]
 
         if n_selected < self._plotting_config.n_voltage_plots:
             pass
@@ -386,19 +357,8 @@ class NetworkGPUArrays(GPUArrayCollection):
 
         separator_mask = neuron_groups != neuron_groups_prev
 
-        self.actualize_group_separator_lines(
-            plot_slots_tensor=self.plotting_arrays.voltage_plot_slots,
-            separator_mask=separator_mask,
-            pos_tensor=self.plotting_arrays.voltage_group_line_pos.tensor,
-            color_tensor=self.plotting_arrays.voltage_group_line_colors.tensor,
-            n_plots=n_voltage_plots)
-
-        self.actualize_group_separator_lines(
-            plot_slots_tensor=self.plotting_arrays.firings_plot_slots,
-            separator_mask=separator_mask,
-            pos_tensor=self.plotting_arrays.firings_group_line_pos.tensor,
-            color_tensor=self.plotting_arrays.firings_group_line_colors.tensor,
-            n_plots=n_scatter_plots)
+        self._voltage_multiplot.actualize_group_separator_lines(separator_mask, n_voltage_plots)
+        self._firing_scatter_plot.actualize_group_separator_lines(separator_mask, n_voltage_plots)
 
     # def redirect_synapses(self, groups, direction, rate):
     #     pass
@@ -410,10 +370,6 @@ class NetworkGPUArrays(GPUArrayCollection):
     @property
     def active_output_groups(self):
         return self.select_groups(self.G_flags.b_output_group.type(torch.bool))
-
-    def unregister_registered_buffers(self):
-        for rb in self.registered_buffers:
-            rb.reg.unregister(None)
 
     def update(self):
 
@@ -455,13 +411,13 @@ class NetworkGPUArrays(GPUArrayCollection):
 
         # print(self.G_firing_count_hist.flatten()[67 + (self.Simulation.t-1) * self._config.G])
 
-        self.plotting_arrays.group_firing_counts_plot_single1.tensor[
+        self._group_firing_counts_plot_single1_tensor[
             t_mod: t_mod + n_updates, 1] = \
             self.G_firing_count_hist[t_mod: t_mod + n_updates, 123] / self.G_neuron_counts[1, 123]
 
         offset1 = self._plotting_config.scatter_plot_length
 
-        self.plotting_arrays.group_firing_counts_plot_single1.tensor[
+        self._group_firing_counts_plot_single1_tensor[
             offset1 + t_mod: offset1 + t_mod + n_updates, 1] = \
             self.G_firing_count_hist[t_mod: t_mod + n_updates, 125] / self.G_neuron_counts[1, 125]
 

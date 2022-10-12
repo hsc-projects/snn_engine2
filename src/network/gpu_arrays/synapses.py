@@ -498,7 +498,7 @@ class SynapseRepresentation(GPUArrayCollection):
         return G_neuron_counts[:len(NeuronTypes)].sum(axis=0)
 
     # noinspection PyUnusedLocal
-    def make_sensory_group(
+    def make_sensory_groups(
             self,
             G_neuron_counts,
             N_pos, G_pos,
@@ -549,10 +549,6 @@ class SynapseRepresentation(GPUArrayCollection):
 
             self.RepBackend.nullify_all_weights_to_group(group)
             print(self.N_rep[:, sensory_neuron_ids[0]])
-
-
-            
-
 
         return
 

@@ -182,19 +182,6 @@ class PlottingConfig:
 @dataclass
 class BufferCollection:
 
-    N_pos: int
-    voltage: int
-    voltage_group_line_pos: int
-    voltage_group_line_colors: int
-    firings: int
-    firings_group_line_pos: int
-    firings_group_line_colors: int
-    selected_group_boxes_vbo: int
-    selected_group_boxes_ibo: int
-    group_firing_counts_plot: int
-    group_firing_counts_plot_single0: int
-    group_firing_counts_plot_single1: int
-
     def __post_init__(self):
         for k, v in asdict(self).items():
             if v is not None:

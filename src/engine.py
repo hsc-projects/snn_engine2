@@ -65,8 +65,8 @@ class EngineConfig:
                             debug=False, InitValues=InitValues())
     plotting = PlottingConfig(n_voltage_plots=10, voltage_plot_length=200,
                               n_scatter_plots=10, scatter_plot_length=200,
-                              windowed_multi_neuron_plots=True,
-                              windowed_neuron_interfaces=True,
+                              windowed_multi_neuron_plots=False,
+                              windowed_neuron_interfaces=False,
                               group_info_view_mode='split',
                               network_config=network)
 
@@ -83,9 +83,9 @@ class Engine(BaseApp):
         numba.cuda.select_device(self.config.device)
 
         # keep order for vbo id (1/4)
-        network = SpikingNeuronNetwork(self.config)
+        super().__init__(self.config.plotting)
         # keep order for vbo id (2/4)
-        super().__init__(network)
+        self.network = SpikingNeuronNetwork(self.config)
         # keep order for vbo id (3/4)
         self.network.initialize_GPU_arrays(self.config.device, self)
         # keep order (4/4)

@@ -11,7 +11,8 @@ from network.network_grid import NetworkGrid
 # noinspection PyAbstractClass
 class Neurons(RenderedObjectNode):
 
-    def __init__(self, config: NetworkConfig, grid_segmentation: NetworkGrid, type_groups):
+    def __init__(self,
+                 config: NetworkConfig, grid_segmentation: NetworkGrid, type_groups):
         # self._canvas = None
         self._shape = config.N_pos_shape
         if config.pos is None:

@@ -183,9 +183,7 @@ class RegisteredGPUArray:
         return pd.DataFrame(self.tensor.cpu().numpy())
 
     def unregister(self):
-        # noinspection PyArgumentList
         self.reg.unregister()
-        # print('unregistered:', self.id)
 
 
 class RegisteredVBO(RegisteredGPUArray):
@@ -207,6 +205,7 @@ class GPUArrayCollection:
         self.device = torch.device(device)
         self.last_allocated_memory = 0
         self.bprint_allocated_memory = bprint_allocated_memory
+        self.registered_buffers = []
 
     def izeros(self, shape) -> torch.Tensor:
         return torch.zeros(shape, dtype=torch.int32, device=self.device)
@@ -236,3 +235,7 @@ class GPUArrayCollection:
                 unit2 = 'MB'
             now = np.round(now, 1)
             print(f"memory_allocated({naming}) = {now}{unit} ({'+' if diff >= 0 else ''}{diff}{unit2})")
+
+    def unregister_registered_buffers(self):
+        for rb in self.registered_buffers:
+            rb.unregister()

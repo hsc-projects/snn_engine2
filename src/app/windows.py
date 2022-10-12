@@ -90,9 +90,6 @@ class MainWindow(BaseWindow):
         hbox = QHBoxLayout(self.centralWidget())
         hbox.addWidget(self.splitter)
 
-    def set_keys(self, keys):
-        self.scene_3d.set_keys(keys)
-
     def add_group_info_scene_to_splitter(self, plotting_config):
         if plotting_config.group_info_view_mode.split is True:
             self.splitter.addWidget(SceneCanvasFrame(self, self.group_info_scene))

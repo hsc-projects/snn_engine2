@@ -7,4 +7,6 @@ pyqt6>=6.2.1
 pyqtdarktheme
 setuptools
 # sortedcontainers
-vispy==0.9.4
+vispy~=0.9.4
+torch
+pandas

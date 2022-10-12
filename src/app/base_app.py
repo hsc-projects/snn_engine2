@@ -1,5 +1,6 @@
 import qdarktheme
 from PyQt6.QtWidgets import QApplication
+from typing import Optional
 from vispy.app import Application, Timer
 
 from .windows import (
@@ -14,7 +15,7 @@ from network import SpikingNeuronNetwork
 
 class BaseApp(Application):
 
-    def __init__(self, network: SpikingNeuronNetwork):
+    def __init__(self, plotting_config):
 
         native_app = QApplication([''])
 
@@ -22,9 +23,9 @@ class BaseApp(Application):
 
         super().__init__(backend_name='pyqt6')
 
-        self.network: SpikingNeuronNetwork = network
+        self.network: Optional[SpikingNeuronNetwork] = None
 
-        self._plotting_config = self.network.plotting_config
+        self._plotting_config = plotting_config
         self._group_info_view_mode = self._plotting_config.group_info_view_mode
 
         native_app.setStyleSheet(qdarktheme.load_stylesheet())
@@ -40,23 +41,20 @@ class BaseApp(Application):
         # keep order for vbo numbers (2/3)
 
         if self._plotting_config.windowed_multi_neuron_plots is True:
-            self.neuron_plot_window: MultiNeuronPlotWindow = self._init_neuron_plot_window(network)
+            # self.neuron_plot_window: MultiNeuronPlotWindow = self._init_neuron_plot_window()
+            self.neuron_plot_window = MultiNeuronPlotWindow(app=self, plotting_config=self._plotting_config)
+            self.neuron_plot_window.show()
         else:
             self.neuron_plot_window = None
 
         if self._group_info_view_mode.windowed is True:
-            self.location_group_info_window = self._init_windowed_group_info(network)
+            self.location_group_info_window = LocationGroupInfoWindow(
+                app=self, parent=self.main_window, plotting_config=self._plotting_config)
+            self.location_group_info_window.show()
             self.group_info_panel = self.location_group_info_window.ui_panel_left
-            self.group_info_scene = self.location_group_info_window.scene_3d
         else:
             self.location_group_info_window = None
             self.group_info_panel = self.main_window.ui_right
-            if self._group_info_view_mode.split is True:
-                self.group_info_scene = self.main_window.group_info_scene
-            elif self._group_info_view_mode.scene is True:
-                self.group_info_scene = self.main_window.scene_3d
-            else:
-                raise NotImplementedError
 
         self.time_elapsed_until_last_off = 0
         self.update_switch = False
@@ -72,92 +70,137 @@ class BaseApp(Application):
         # noinspection PyUnresolvedReferences
         native_app.aboutToQuit.connect(self.interfaced_neuron_collection.unregister_registered_buffers)
 
+    @property
+    def actions(self):
+        return self.main_window.menubar.actions
+
+    @property
+    def main_ui_panel(self) -> MainUILeft:
+        return self.main_window.ui_panel_left
+
+    @property
+    def firing_scatter_plot_scene(self):
+        if self._plotting_config.windowed_multi_neuron_plots is True:
+            return self.neuron_plot_window.scatter_plot_sc
+        else:
+            return self.main_window.scene_3d
+
+    @property
+    def firing_scatter_plot_view(self):
+        if self._plotting_config.windowed_multi_neuron_plots is True:
+            return self.neuron_plot_window.scatter_plot_sc.plot.view
+        else:
+            return self.main_window.scene_3d.scatter_plot
+
+    @property
+    def group_firings_multiplot_view(self):
+        if self._group_info_view_mode.windowed is True:
+            return self.location_group_info_window.scene_3d.group_firings_multiplot
+        elif self._group_info_view_mode.split is True:
+            return self.main_window.group_info_scene.group_firings_multiplot
+        elif self._group_info_view_mode.scene is True:
+            return self.main_window.scene_3d.group_firings_multiplot
+
+    @property
+    def group_info_scene(self):
+        if self._group_info_view_mode.windowed is True:
+            return self.location_group_info_window.scene_3d
+        elif self._group_info_view_mode.split is True:
+            return self.main_window.group_info_scene
+        elif self._group_info_view_mode.scene is True:
+            return self.main_window.scene_3d
+
+    @property
+    def group_info_view(self):
+        if self._group_info_view_mode.windowed is True:
+            return self.location_group_info_window.scene_3d.view
+        elif self._group_info_view_mode.split is True:
+            return self.main_window.group_info_scene.view
+        elif self._group_info_view_mode.scene is True:
+            return self.main_window.scene_3d.network_view
+
+    @property
+    def voltage_multiplot_scene(self):
+        if self._plotting_config.windowed_multi_neuron_plots is True:
+            return self.neuron_plot_window.voltage_plot_sc
+        else:
+            return self.main_window.scene_3d
+
+    @property
+    def voltage_multiplot_view(self):
+        if self._plotting_config.windowed_multi_neuron_plots is True:
+            return self.neuron_plot_window.voltage_plot_sc.plot.view
+        else:
+            return self.main_window.scene_3d.voltage_plot
+
+    def add_selector_box(self):
+        s = self.network.add_selector_box(
+            self.main_window.scene_3d, self.main_window.scene_3d.network_view)
+        self.main_ui_panel.add_3d_object_sliders(s)
+
     def set_main_context_as_current(self):
         self.main_window.scene_3d.set_current()
 
-    def set_group_info_context_as_current(self):
-        if self._group_info_view_mode.windowed is True:
-            self.location_group_info_window.scene_3d.set_current()
-        elif self._group_info_view_mode.split is True:
-            self.main_window.group_info_scene.set_current()
-        else:
-            pass
+    # def set_group_info_context_as_current(self):
+    #     if self._group_info_view_mode.windowed is True:
+    #         self.location_group_info_window.scene_3d.set_current()
+    #     elif self._group_info_view_mode.split is True:
+    #         self.main_window.group_info_scene.set_current()
+    #     else:
+    #         pass
 
     def _init_main_window(self, screens) -> MainWindow:
         main_window = MainWindow(name="SNN Engine", app=self, plotting_config=self._plotting_config)
         main_window.setScreen(screens[0])
-        main_window.scene_3d.set_current()
-        for o in self.network.rendered_3d_objs:
-            main_window.scene_3d.network_view.add(o)
+        # main_window.scene_3d.set_current()
+        # for o in self.network.rendered_3d_objs:
+        #     main_window.scene_3d.network_view.add(o)
 
-        if main_window.scene_3d.voltage_plot:
-            main_window.scene_3d.voltage_plot.add(self.network.voltage_plot)
-        if main_window.scene_3d.scatter_plot:
-            main_window.scene_3d.scatter_plot.add(self.network.firing_scatter_plot)
+        # if self._group_info_view_mode.scene is True:
+        #     main_window.scene_3d.group_firings_plot.add(self.network.group_firing_counts_plot)
 
-        if self._group_info_view_mode.scene is True:
-            main_window.scene_3d.group_firings_plot.add(self.network.group_firing_counts_plot)
-
-        if main_window.scene_3d.group_firings_plot_single0 is not None:
-            main_window.scene_3d.group_firings_plot_single0.add(self.network.group_firing_counts_plot_single0)
-        if main_window.scene_3d.group_firings_plot_single1 is not None:
-            main_window.scene_3d.group_firings_plot_single1.add(self.network.group_firing_counts_plot_single1)
+        # if main_window.scene_3d.group_firings_plot_single0 is not None:
+        #     main_window.scene_3d.group_firings_plot_single0.add(self.network.group_firing_counts_plot_single0)
+        # if main_window.scene_3d.group_firings_plot_single1 is not None:
+        #     main_window.scene_3d.group_firings_plot_single1.add(self.network.group_firing_counts_plot_single1)
 
         if self._group_info_view_mode.split is True:
             # keep order for vbo id
             main_window.add_group_info_scene_to_splitter(self._plotting_config)
             # keep order for vbo id
-            main_window.group_info_scene.group_firings_plot.add(self.network.group_firing_counts_plot)
-            main_window.group_info_scene.view.add(self.network.group_info_mesh)
+            # main_window.group_info_scene.group_firings_multiplot.add(self.network.group_firing_counts_plot)
+            # main_window.group_info_scene.view.add(self.network.group_info_mesh)
 
-        main_window.set_keys({
-            'left': self.network.selector_box.translate.mv_left,
-            'right': self.network.selector_box.translate.mv_right,
-            'up': self.network.selector_box.translate.mv_fw,
-            'down': self.network.selector_box.translate.mv_bw,
-            'pageup': self.network.selector_box.translate.mv_up,
-            'pagedown': self.network.selector_box.translate.mv_down,
-        })
         main_window.show()
         main_window.setGeometry(screens[0].availableGeometry())
         return main_window
 
-    def _init_neuron_plot_window(self, network: SpikingNeuronNetwork):
-        neuron_plot_window = MultiNeuronPlotWindow(app=self, plotting_config=self._plotting_config)
-        neuron_plot_window.voltage_plot_sc.set_current()
-        neuron_plot_window.voltage_plot_sc.plot.view.add(network.voltage_plot)
-        neuron_plot_window.scatter_plot_sc.set_current()
-        neuron_plot_window.scatter_plot_sc.plot.view.add(network.firing_scatter_plot)
-        neuron_plot_window.show()
-        return neuron_plot_window
+    # def _init_neuron_plot_window(self):
+    #     neuron_plot_window = MultiNeuronPlotWindow(app=self, plotting_config=self._plotting_config)
+    #     # neuron_plot_window.voltage_plot_sc.set_current()
+    #     # neuron_plot_window.voltage_plot_sc.plot.view.add(network.voltage_plot)
+    #     # neuron_plot_window.scatter_plot_sc.set_current()
+    #     # neuron_plot_window.scatter_plot_sc.plot.view.add(network.firing_scatter_plot)
+    #     neuron_plot_window.show()
+    #     return neuron_plot_window
 
-    def _init_windowed_group_info(self, network: SpikingNeuronNetwork):
-        location_group_info_window = LocationGroupInfoWindow(
-            app=self, parent=self.main_window, plotting_config=self._plotting_config)
-        location_group_info_window.scene_3d.set_current()
-        location_group_info_window.scene_3d.view.add(network.group_info_mesh)
-
-        if location_group_info_window.scene_3d.group_firings_plot is not None:
-            location_group_info_window.scene_3d.group_firings_plot.add(self.network.group_firing_counts_plot)
-
-        location_group_info_window.show()
-        return location_group_info_window
+    # def _init_windowed_group_info(self):
+    #     location_group_info_window =
+    #     return location_group_info_window
 
     def _bind_ui(self):
         network_config = self.network.network_config
 
         self._connect_main_buttons_and_actions()
 
-        self.main_ui_panel.add_3d_object_sliders(self.network.selector_box)
-        self.main_ui_panel.add_3d_object_sliders(self.network.input_cells)
-        self.main_ui_panel.add_3d_object_sliders(self.network.output_cells)
-        # self.main_ui_panel.add_neurons_slider(self.network, self)
+        self.main_ui_panel.add_3d_object_sliders(self.network.input_groups)
+        self.main_ui_panel.add_3d_object_sliders(self.network.output_groups)
 
         self._connect_g_props_sliders(network_config)
 
         self.main_ui_panel.sliders.sensory_weight.connect_property(
-            self.network.input_cells,
-            self.network.input_cells.src_weight)
+            self.network.input_groups,
+            self.network.input_groups.src_weight)
 
         self.connect_group_info_combo_box()
 
@@ -264,10 +307,15 @@ class BaseApp(Application):
         self.main_ui_panel.buttons.pause.clicked.connect(self.trigger_update_switch)
         self.main_ui_panel.buttons.exit.clicked.connect(self.quit)
         self.main_ui_panel.buttons.toggle_outergrid.clicked.connect(self.toggle_outergrid)
+
+        self.main_ui_panel.buttons.add_selector_box.clicked.connect(self.add_selector_box)
+
         self.actions.start.triggered.connect(self.trigger_update_switch)
         self.actions.pause.triggered.connect(self.trigger_update_switch)
         self.actions.exit.triggered.connect(self.quit)
         self.actions.toggle_outergrid.triggered.connect(self.toggle_outergrid)
+
+        self.actions.add_selector_box.triggered.connect(self.add_selector_box)
 
     def group_id_combo_box_text_changed(self, s):
         print(s)
@@ -337,23 +385,24 @@ class BaseApp(Application):
         self._set_g2g_color_bar_clim(clim)
 
     def toggle_outergrid(self):
+        # self.add_selector_box()
+
         self.network.outer_grid.visible = not self.network.outer_grid.visible
+
         if self.network.outer_grid.visible is True:
-            # self.buttons.toggle_outergrid.setText('Hide OuterGrid')
             self.main_ui_panel.buttons.toggle_outergrid.setChecked(True)
             self.actions.toggle_outergrid.setChecked(True)
 
             if self._group_info_view_mode.scene is True:
-                self.main_window.scene_3d.group_firings_plot.visible = True
+                self.main_window.scene_3d.group_firings_multiplot.visible = True
             if self.neuron_plot_window is not None:
                 self.neuron_plot_window.hide()
 
         else:
-            # self.buttons.toggle_outergrid.setText('Show OuterGrid')
             self.main_ui_panel.buttons.toggle_outergrid.setChecked(False)
             self.actions.toggle_outergrid.setChecked(False)
             if self._group_info_view_mode.scene is True:
-                self.main_window.scene_3d.group_firings_plot.visible = False
+                self.main_window.scene_3d.group_firings_multiplot.visible = False
             if self.neuron_plot_window is not None:
                 self.neuron_plot_window.show()
 
@@ -372,14 +421,6 @@ class BaseApp(Application):
             self.actions.start.setDisabled(False)
             self.main_ui_panel.buttons.pause.setDisabled(True)
             self.actions.pause.setDisabled(True)
-
-    @property
-    def main_ui_panel(self) -> MainUILeft:
-        return self.main_window.ui_panel_left
-
-    @property
-    def actions(self):
-        return self.main_window.menubar.actions
 
     # noinspection PyUnusedLocal
     def update(self, event):
