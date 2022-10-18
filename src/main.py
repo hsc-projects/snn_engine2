@@ -10,7 +10,11 @@ from pre_build_networks.rate_network0 import RateNetwork0Config
 
 # high priority
 
+# TODO: ReLu-ANN
+# TODO: Synapse Visualization (incl. weight?)
+# TODO: Chemical Diffusion + Visualization
 # TODO: in-engine configuration/construction
+# TODO: -ax**2 + b connection probability
 # TODO: 1. minimalistic network; 2. rate network
 # TODO: 1. concentration volumes; 2. concentration diffusions
 

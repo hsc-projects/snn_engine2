@@ -36,25 +36,29 @@ Parametrized Components:
 
 ### Network Construction
 
-$N := \text{number of neurons}$
+$$ 
+\begin{aligned} N &:= \text{number of neurons}, \\ 
+S &:= \text{number of synapses per neuron}. \end{aligned}
+$$
 
-$S := \text{number of synapses per neuron}$
-
-Neurons Positions: Uniformly distributed in a $1 \times 1 \times 1 $ Volume.
+Neurons Positions: Uniformly distributed in a $1 \times 1 \times 1$ Volume.
 
 Synapse Existence Probability:
 For neurons $n_0, n_1$, the probability of the existence of a synapse 
 from $n_0$ to $n_1$ is 
 
-$\mathbb{P}(n_0, d) ~= -a_{n_0} * d^2 + b_{n_0} \text{ such that } 
-\mathbb{E}[\text{"number of synapses of } n_0 \text{"}] = S$
+$$
+\mathbb{P}(n_0, d) \approx -a_{n_0} * d^2 + b_{n_0} \text{ such that } 
+\mathbb{E}[\text{"number of synapses of } n_0 \text{"}] \approx S,
+$$
 
 with $a_{n_0}, b_{n_0} > 0$.
 
-Activation Functions: ReLu
+Activation Functions: ReLu.
 
-Pattern Layer Size: $P \approx \frac{N}{ \sqrt{N} }$, dimensions: $\sqrt{P} \times \sqrt{P}$
+Pattern Layer Size: $P \approx \frac{N}{ \sqrt{N} }$, dimensions: $\sqrt{P} \times \sqrt{P}$.
 
+...
 
 ![ann0](./docs_src/readme_images/ann_process/ann_1.svg)
 
