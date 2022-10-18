@@ -297,7 +297,7 @@ class IOSnn0Config(EngineConfig):
             Exc2Exc: float = .75
             SensorySource: float = 1.5
 
-    N: int = 5 * 10 ** 3
+    N: int = 2 * 10 ** 5
     T: int = 5000  # Max simulation record duration
 
     device: int = 0

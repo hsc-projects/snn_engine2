@@ -474,9 +474,9 @@ class SelectedGroups(GroupBoxesBase):
     def init_cuda_arrays(self):
         self._input_color_array = self._sensory_input_planes.face_color_array(self._cuda_device)
         self.registered_buffers.append(self._input_color_array)
-        self._input_color_array.tensor[:, 3] = .5
+        self._input_color_array.tensor[:, 3] = .0
         self._output_color_array = self._output_planes.face_color_array(self._cuda_device)
-        self._output_color_array.tensor[:, 3] = .5
+        self._output_color_array.tensor[:, 3] = .0
         self.registered_buffers.append(self._output_color_array)
 
     # noinspection PyMethodOverriding

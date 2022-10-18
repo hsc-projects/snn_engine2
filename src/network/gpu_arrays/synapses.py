@@ -531,7 +531,7 @@ class SynapseRepresentation(GPUArrayCollection):
             if n_sensory_neurons > 1:
                 new_x_coords = torch.linspace(G_pos.tensor[group][0] + ux * 0.1,
                                               G_pos.tensor[group][0] + ux * 0.9,
-                                              steps=n_sensory_neurons)
+                                              steps=n_sensory_neurons, device=self.device)
             else:
                 new_x_coords = G_pos.tensor[group][0] + ux * 0.5
             new_y_coords = G_pos.tensor[group][1]

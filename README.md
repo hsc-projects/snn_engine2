@@ -1,8 +1,71 @@
-# Proposal for an Ant Colony Optimization-like Mechanism for the Association of distant neuronal Assemblies of spatially extended spiking neural Networks
-
-
+# Pheromonal Spatial Neural Networks
 
 We propose to utilize the volume surrounding a spatially extended network as an information buffer. 
+
+
+## Idea 2: Formal/Minimalistic Formulation / "Pheromonal less-traveled Pathfinding in spatial Networks"
+
+Components:
+
+1. ANN (Reservoir + Patter Layer)
+2. Node Associations
+3. Nodes may modify the volume locally and non-permanently. 
+4. Problem: Build associations without destroying exiting ones, 
+"as decentralized as possible/ with minimal global knowledge". 
+
+
+
+Parametrized Components:
+
+1. Network Construction:
+   1. Neuron Positions 
+   2. Synapse Existence Probabilities 
+   3. Initial synaptic weights
+   4. Neuron activation function
+   5. Definition of Association
+   6. Construction of Existing Associations 
+   7. Pattern Layer (size + connectivity + activation function + additional activation restrictions)
+   
+2. Path Finding
+   1. Synapse choice
+   2. short-term Synaptic weight changes
+   3. long-term synaptic weight changes
+   4. Neurons choice (via similarity measurement on the Pattern Layer)
+   5. Pheromone diffusion 
+   6. Pheromone lifetime
+
+### Network Construction
+
+$N := \text{number of neurons}$
+
+$S := \text{number of synapses per neuron}$
+
+Neurons Positions: Uniformly distributed in a $1 \times 1 \times 1 $ Volume.
+
+Synapse Existence Probability:
+For neurons $n_0, n_1$, the probability of the existence of a synapse 
+from $n_0$ to $n_1$ is 
+
+$\mathbb{P}(n_0, d) ~= -a_{n_0} * d^2 + b_{n_0} \text{ such that } 
+\mathbb{E}[\text{"number of synapses of } n_0 \text{"}] = S$
+
+with $a_{n_0}, b_{n_0} > 0$.
+
+Activation Functions: ReLu
+
+Pattern Layer Size: $P \approx \frac{N}{ \sqrt{N} }$, dimensions: $\sqrt{P} \times \sqrt{P}$
+
+
+![ann0](./docs_src/readme_images/ann_process/ann_1.svg)
+
+![ann0](./docs_src/readme_images/ann_process/ann_23.svg)
+![ann0](./docs_src/readme_images/ann_process/ann_4.svg)
+
+[//]: # (![ann0]&#40;./docs_src/readme_images/ann_process/ann_5.svg&#41;)
+
+
+
+## Idea 1: Proposal for an Ant Colony Optimization-like Mechanism for the Association of distant neuronal Assemblies of spatially extended spiking neural Networks
 
 By combining the concepts related to neurovascular coupling, STDP modulation via chemical concentrations, 
 the concept of neural concept cell assemblies,
@@ -27,10 +90,7 @@ the delivery rates in the vicinity of neurons with lower firing rates.
 Visually, we intended to create the impression of spike trains
 leaving chemical trails behind them.  
 
-
- 
-
-## Network Model 
+### Network Model 
 
 We consider a spatially extended spiking neural network (**seSNN**) of 
 inhibitory and excitatory neurons. 

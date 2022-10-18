@@ -123,9 +123,10 @@ class RateNetwork0(SpikingNeuralNetwork):
 
         self.group_info_mesh.unregister_registered_buffers()
 
+
 class RateNetwork0Config(EngineConfig):
 
-    N: int = 5 * 10 ** 3
+    N: int = 5 * 10 ** 2
     T: int = 5000  # Max simulation record duration
 
     device: int = 0
