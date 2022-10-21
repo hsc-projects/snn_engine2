@@ -500,7 +500,8 @@ class IOGroups(RenderedCudaObjectNode):
 
     count: int = 0
 
-    def __init__(self, pos,
+    def __init__(self, scene, view,
+                 pos,
                  data: np.array,
                  network,
                  compatible_groups: np.array,
@@ -510,6 +511,8 @@ class IOGroups(RenderedCudaObjectNode):
                  segmentation=(3, 1, 1),
                  unit_shape=None,
                  color=(1., 1., 1., 1.), name=None, **kwargs):
+
+        scene.set_current()
 
         if 'x' in face_dir:
             i = 0
@@ -616,6 +619,9 @@ class IOGroups(RenderedCudaObjectNode):
         self.freeze()
 
         self.normals.transform = self.transform
+
+        view.add(self)
+        scene._draw_scene()
 
     @property
     def parent(self):
@@ -772,7 +778,10 @@ class IOGroups(RenderedCudaObjectNode):
 # noinspection PyAbstractClass
 class InputGroups(IOGroups):
 
-    def __init__(self, pos,
+    def __init__(self,
+                 scene,
+                 view,
+                 pos,
                  data: np.array,
                  network,
                  compatible_groups: np.array,
@@ -782,7 +791,8 @@ class InputGroups(IOGroups):
                  unit_shape=None,
                  color=(1., 1., 1., 1.), name=None, **kwargs):
 
-        super().__init__(pos=pos, data=data, network=network, compatible_groups=compatible_groups,
+        super().__init__(scene=scene, view=view,
+                         pos=pos, data=data, network=network, compatible_groups=compatible_groups,
                          data_color_coding=data_color_coding, face_dir=face_dir, segmentation=segmentation,
                          unit_shape=unit_shape, color=color, name=name, **kwargs)
         self.unfreeze()

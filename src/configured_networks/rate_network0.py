@@ -57,6 +57,8 @@ class RateNetwork0(SpikingNeuralNetwork):
 
         self.registered_buffers += self.simulation_gpu.registered_buffers
 
+        self.synapse_arrays.visualized_synapses.add_synapse_visual(0)
+
     def unregister_registered_buffers(self):
         super().unregister_registered_buffers()
 

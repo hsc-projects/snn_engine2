@@ -4,8 +4,8 @@ import sys
 
 from engine import Engine
 
-from pre_build_networks.io_network0 import IOSnn0Config
-from pre_build_networks.rate_network0 import RateNetwork0Config
+from configured_networks.io_network0 import IOSnn0Config
+from configured_networks.rate_network0 import RateNetwork0Config
 
 
 # high priority

@@ -3,49 +3,12 @@ import torch
 
 from vispy.scene import visuals
 
-from rendering import RenderedCudaObjectNode, CudaLine
+from rendering import RenderedCudaObjectNode
 from geometry import grid_coordinates, validate_pos
 from network.network_config import NetworkConfig
 from network.network_grid import NetworkGrid
 from network.network_structures import NeuronTypes
 from network.gpu.cpp_cuda_backend import RegisteredVBO
-
-
-# noinspection PyAbstractClass
-class SynapseVisual(RenderedCudaObjectNode):
-
-    def __init__(self,
-                 scene,
-                 view,
-                 src_pos,
-                 snk_pos,
-                 device):
-
-        scene.set_current()
-
-        src_pos = np.reshape(src_pos, (1, 3))
-
-        pos = np.vstack([src_pos, snk_pos])
-
-        n_sinks = len(snk_pos)
-
-        connect = np.zeros(n_sinks * 2)
-        connect[1::2] = np.arange(n_sinks)
-
-        self.line: CudaLine = CudaLine(pos=pos,
-                                       # color=(0, 0, 0, 1),
-                                       connect=connect,
-                                       antialias=False, width=1, parent=None)
-
-        RenderedCudaObjectNode.__init__(self, [self.line])
-
-        view.add(self)
-
-        self.init_cuda_attributes(device=device)
-
-    def init_cuda_attributes(self, device):
-        super().init_cuda_attributes(device)
-        self.registered_buffers += self.line.registered_buffers
 
 
 # noinspection PyAbstractClass
@@ -127,9 +90,13 @@ class NeuronVisual(RenderedCudaObjectNode):
         return self._obj._vbo.id
 
     @property
-    def face_color(self):
-        return self.gpu_array.tensor[:, 7:11]
+    def edge_color(self):
+        return self._gpu_array.tensor[:, 3:7]
 
     @property
-    def edge_color(self):
-        return self.gpu_array.tensor[:, 3:7]
+    def face_color(self):
+        return self._gpu_array.tensor[:, 7:11]
+
+    @property
+    def pos(self):
+        return self._gpu_array.tensor[:, 0:3]

@@ -176,3 +176,7 @@ class NeuronRepresentation(GPUArrayCollection):
     @property
     def active_output_groups(self):
         return self.select_groups(self.G_flags.b_output_group.type(torch.bool))
+
+    @property
+    def pos(self):
+        return self._neuron_visual._gpu_array.tensor[:, 0:3]

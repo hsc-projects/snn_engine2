@@ -38,7 +38,9 @@ class CudaLine(Line, CudaObject):
 
     def init_cuda_arrays(self):
         self.pos_gpu = RegisteredVBO(self.pos_vbo, shape=self.pos.shape, device=self._cuda_device)
-        self.colors_gpu = RegisteredVBO(self.color_vbo, shape=self.color.shape, device=self._cuda_device)
-
         self.registered_buffers.append(self.pos_gpu)
-        self.registered_buffers.append(self.colors_gpu)
+
+        color = self._interpret_color()[0]
+        if color.ndim == 2:
+            self.colors_gpu = RegisteredVBO(self.color_vbo, shape=self.color.shape, device=self._cuda_device)
+            self.registered_buffers.append(self.colors_gpu)

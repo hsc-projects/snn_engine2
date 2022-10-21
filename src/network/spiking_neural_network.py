@@ -96,6 +96,8 @@ class SpikingNeuralNetwork:
         self.registered_buffers += self.neurons.registered_buffers
 
         self.synapse_arrays = SynapseRepresentation(
+            scene=engine.main_window.scene_3d,
+            view=engine.main_window.scene_3d.network_view,
             neurons=self.neurons,
             device=config.device, shapes=self.neurons.data_shapes)
 
@@ -129,8 +131,8 @@ class SpikingNeuralNetwork:
     def add_input_groups(self, scene, view):
         if self.input_groups is not None:
             raise AttributeError
-        scene.set_current()
         self.input_groups = InputGroups(
+            scene=scene, view=view,
             data=np.array([0, 1, 0], dtype=np.int32),
             pos=np.array([[int(self.network_config.N_pos_shape[0]/2 + 1) * self.network_config.grid.unit_shape[1],
                            0.,
@@ -139,8 +141,6 @@ class SpikingNeuralNetwork:
             state_colors_attr='input_face_colors',
             compatible_groups=self.network_config.sensory_groups,
         )
-        view.add(self.input_groups)
-        scene._draw_scene()
         self.input_groups.init_cuda_attributes(
             self.simulation_gpu.device, self.neurons.G_flags, self.neurons.G_props)
         self.input_groups.src_weight = self.network_config.InitValues.Weights.SensorySource
@@ -150,9 +150,9 @@ class SpikingNeuralNetwork:
     def add_output_groups(self, scene, view):
         if self.output_groups is not None:
             raise AttributeError
-        scene.set_current()
         shape = self.neurons._neuron_visual._shape
         self.output_groups = OutputGroups(
+            scene=scene, view=view,
             data=np.array([0, -1, 1], dtype=np.int32),
             pos=np.array([[int(shape[0]/2 + 1) * self.network_config.grid.unit_shape[1],
                            shape[1] - self.network_config.grid.unit_shape[1],
@@ -167,8 +167,6 @@ class SpikingNeuralNetwork:
             compatible_groups=self.network_config.output_groups,
             face_dir='+z',
         )
-        view.add(self.output_groups)
-        scene._draw_scene()
 
         self.output_groups.init_cuda_attributes(self.simulation_gpu.device,
                                                 self.neurons.G_flags,
@@ -229,4 +227,5 @@ class SpikingNeuralNetwork:
     def unregister_registered_buffers(self):
         for rb in self.registered_buffers:
             rb.unregister()
+        self.synapse_arrays.unregister_registered_buffers()
 

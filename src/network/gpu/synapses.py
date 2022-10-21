@@ -5,7 +5,7 @@ from network.network_array_shapes import NetworkArrayShapes
 
 from network.network_structures import NeuronTypes
 from network.network_grid import NetworkGrid
-
+from network.gpu.visualized_elements.synapse_visuals import VisualizedSynapsesCollection
 
 # noinspection PyUnresolvedReferences
 from network.gpu.cpp_cuda_backend import (
@@ -23,6 +23,8 @@ from network.gpu.neurons import NeuronRepresentation
 class SynapseRepresentation(GPUArrayCollection):
 
     def __init__(self,
+                 scene,
+                 view,
                  neurons: NeuronRepresentation,
                  device: int,
                  shapes: NetworkArrayShapes,
@@ -94,6 +96,11 @@ class SynapseRepresentation(GPUArrayCollection):
         self.G_swap_tensor = self._G_swap_tensor()
         self.N_relative_G_indices = self._N_relative_G_indices()
         self.print_allocated_memory('G_swap_tensor')
+
+        self.visualized_synapses = VisualizedSynapsesCollection(
+            scene=scene, view=view, device=device, neurons=self.neurons,
+            synapses=self
+        )
 
     def actualize_N_rep_pre_synaptic_idx(self, shapes):
 
@@ -607,3 +614,5 @@ class SynapseRepresentation(GPUArrayCollection):
         b[4] = b[0] != b[3]
 
         return a, b
+
+    
