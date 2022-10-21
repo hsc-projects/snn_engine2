@@ -40,7 +40,7 @@ from pre_build_networks.rate_network0 import RateNetwork0Config
 
 # # ui
 
-# TODO: gpu side group_info_mesh face color actualization
+# TODO: cpp_cuda_backend side group_info_mesh face color actualization
 # TODO: group selection via selector box
 # TODO: group selection via click
 
@@ -48,7 +48,7 @@ from pre_build_networks.rate_network0 import RateNetwork0Config
 if __name__ == '__main__':
 
     gloo.gl.use_gl('gl+')
-    eng = Engine(IOSnn0Config())
-    # eng = Engine(RateNetwork0Config())
+    # eng = Engine(IOSnn0Config())
+    eng = Engine(RateNetwork0Config())
     if sys.flags.interactive != 1:
         eng.run()

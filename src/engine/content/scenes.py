@@ -78,7 +78,8 @@ class MainSceneCanvas(BaseEngineSceneCanvas):
         if plotting_config.group_info_view_mode.scene is True:
             if plotting_config.has_group_firings_multiplot:
                 self.group_firings_multiplot = GroupFiringsPlotWidget(plotting_confing=plotting_config)
-            self.grid.add_widget(self.group_firings_multiplot, plot_row1, plot_col1, col_span=col_span0, row_span=row_span10)
+            self.grid.add_widget(self.group_firings_multiplot, plot_row1, plot_col1,
+                                 col_span=col_span0, row_span=row_span10)
             self.color_bar = GroupInfoColorBar()
             self.grid.add_widget(self.color_bar, plot_row1, plot_col0 + col_span0, row_span10, 1)
         if plotting_config.has_group_firings_plot0:
@@ -126,9 +127,9 @@ class MainSceneCanvas(BaseEngineSceneCanvas):
 
         if self._clicked_obj is not self._last_selected_obj:
 
-            self.network.GPU._N_pos_edge_color[:, 3] = 0.05
-            self.network.GPU._N_pos_face_color[:, 3] = 0.05
-            self.network._neurons.set_gl_state(depth_test=False)
+            self.network.neurons._neuron_visual.face_color[:, 3] = 0.05
+            self.network.neurons._neuron_visual.edge_color[:, 3] = 0.05
+            self.network.neurons._neuron_visual.set_gl_state(depth_test=False)
 
             for o in copy(self._selected_objects):
                 if ((not (o is self._clicked_obj))
@@ -184,9 +185,9 @@ class MainSceneCanvas(BaseEngineSceneCanvas):
 
             print(f'currently selected ({len(self._selected_objects)}):', self._selected_objects)
             if len(self._selected_objects) == 0:
-                self.network.GPU._N_pos_face_color[:, 3] = 0.3
-                self.network.GPU._N_pos_edge_color[:, 3] = 0.5
-                self.network._neurons.set_gl_state(depth_test=True)
+                self.network.neurons._neuron_visual.face_color[:, 3] = 0.3
+                self.network.neurons._neuron_visual.edge_color[:, 3] = 0.5
+                self.network.neurons._neuron_visual.set_gl_state(depth_test=True)
 
     def on_mouse_move(self, event):
         self.network_view.camera.interactive = True

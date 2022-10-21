@@ -4,7 +4,7 @@ from typing import Optional
 import numpy as np
 import torch
 
-from gpu import RegisteredGPUArray, GPUArrayConfig, GPUArrayCollection, RegisteredVBO
+from network.gpu.cpp_cuda_backend import RegisteredGPUArray, GPUArrayConfig, GPUArrayCollection, RegisteredVBO
 from network.network_grid import NetworkGrid
 from network.network_config import NetworkConfig
 from network.network_state.state_tensor import StateTensor, StateRow, Sliders

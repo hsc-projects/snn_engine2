@@ -6,7 +6,7 @@ from typing import Callable, Optional, Union
 from signaling.signaling import (
     SignalModel)
 
-from network.visualized_elements.plots import SingleNeuronPlot
+from network.gpu.visualized_elements.plots import SingleNeuronPlot
 from network.spiking_neural_network import SpikingNeuralNetwork
 from engine.content.plot_widgets import SingleNeuronPlotWidget
 from network.network_structures import ModelIDs, NeuronTypes
@@ -74,7 +74,7 @@ class NeuronInterface:
     def id(self, i):
         previous_model_id = self.model_id
         self._id = i
-        self._model_id = self.network.GPU.N_flags.model[self.id]
+        self._model_id = self.network.neurons.N_flags.model[self.id]
         # print('self._model_id =', self._model_id)
         self.set_plotting_u_factor()
         b_neuron_model_changed = bool(self.model_id != previous_model_id)
@@ -106,25 +106,25 @@ class NeuronInterface:
     @property
     def presets(self):
         # return self.network.GPU.N_states.presets
-        return self.network.GPU.N_states.get_model_class_instance(self.model_id).presets
+        return self.network.neurons.N_states.get_model_class_instance(self.model_id).presets
 
     @property
     def group(self):
         # return self.network.GPU.N_G[self.id, self.network.network_config.N_G_group_id_col]
-        return self.network.GPU.N_flags.group[self.id]
+        return self.network.neurons.N_flags.group[self.id]
 
     @property
     def type(self):
         # return self.network.GPU.N_G[self.id, self.network.network_config.N_G_neuron_type_col]
-        return self.network.GPU.N_flags.type[self.id]
+        return self.network.neurons.N_flags.type[self.id]
 
     def get_model_class_instance(self):
-        return self.network.GPU.N_states.get_model_class_instance(self.model_id)
+        return self.network.neurons.N_states.get_model_class_instance(self.model_id)
 
     @property
     def model_id(self):
         if self._model_id is None:
-            self._model_id = self.network.GPU.N_flags.model[self.id]
+            self._model_id = self.network.neurons.N_flags.model[self.id]
         return self._model_id
 
     @property
@@ -132,7 +132,7 @@ class NeuronInterface:
         return self.get_model_class_instance()._model_specific_variables
 
     def register_vbos(self):
-        self.plot.init_cuda_attributes(self.network.GPU.device)
+        self.plot.init_cuda_attributes(self.network.simulation_gpu.device)
         self.plot.line.colors_gpu.tensor[:, 3] = 0
 
     def link_plot_widget(self, plot_widget: SingleNeuronPlotWidget):
@@ -141,35 +141,35 @@ class NeuronInterface:
 
     @property
     def pt(self):
-        return self.network.GPU.N_states.pt[self.id]
+        return self.network.neurons.N_states.pt[self.id]
 
     @pt.setter
     def pt(self, v):
-        self.network.GPU.N_states.pt[self.id] = v
+        self.network.neurons.N_states.pt[self.id] = v
 
     @property
     def v(self):
-        return self.network.GPU.N_states.v[self.id]
+        return self.network.neurons.N_states.v[self.id]
 
     @v.setter
     def v(self, value):
-        self.network.GPU.N_states.v[self.id] = value
+        self.network.neurons.N_states.v[self.id] = value
 
     @property
     def u(self):
-        return self.network.GPU.N_states.u[self.id]
+        return self.network.neurons.N_states.u[self.id]
 
     @u.setter
     def u(self, v):
-        self.network.GPU.N_states.u[self.id] = v
+        self.network.neurons.N_states.u[self.id] = v
 
     @property
     def i(self):
-        return self.network.GPU.N_states.i[self.id]
+        return self.network.neurons.N_states.i[self.id]
 
     @i.setter
     def i(self, v):
-        self.network.GPU.N_states.i[self.id] = v
+        self.network.neurons.N_states.i[self.id] = v
 
     def set_current_injection(self, activate: bool, mode):
 
@@ -178,19 +178,19 @@ class NeuronInterface:
 
     @property
     def i_prev(self):
-        return self.network.GPU.N_states.i_prev[self.id]
+        return self.network.neurons.N_states.i_prev[self.id]
 
     @i_prev.setter
     def i_prev(self, v):
-        self.network.GPU.N_states.i_prev[self.id] = v
+        self.network.neurons.N_states.i_prev[self.id] = v
 
     @property
     def v_prev(self):
-        return self.network.GPU.N_states.v_prev[self.id]
+        return self.network.neurons.N_states.v_prev[self.id]
 
     @v_prev.setter
     def v_prev(self, v):
-        self.network.GPU.N_states.v_prev[self.id] = v
+        self.network.neurons.N_states.v_prev[self.id] = v
 
     @property
     def plot_length(self):
@@ -247,7 +247,7 @@ class NeuronInterface:
 
     @property
     def state_tensor(self):
-        return self.network.GPU.N_states
+        return self.network.neurons.N_states
 
 # class IzhikevichNeuronsInterface(NeuronInterface):
 #

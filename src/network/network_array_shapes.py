@@ -11,7 +11,6 @@ class NetworkArrayShapes:
                  plotting_config: PlottingConfig,
                  n_neuron_types=2):
 
-        self.N_pos = (config.N, config.vispy_scatter_plot_stride)
         self.N_G = (config.N, config.N_G_n_cols)
 
         # Network Representation

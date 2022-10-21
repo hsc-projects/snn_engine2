@@ -183,15 +183,18 @@ class Engine(Application):
         self.network.interface_single_neurons(self)
 
     def connect_group_info_combo_box(self):
-        self.group_info_panel.group_ids_combobox().add_items(self.network.group_info_mesh.group_id_texts.keys())
-        self.group_info_panel.g_flags_combobox().add_items(self.network.group_info_mesh.G_flags_texts.keys())
-        self.group_info_panel.g_props_combobox().add_items(self.network.group_info_mesh.G_props_texts.keys())
-        g_txt = self.network.group_info_mesh.group_id_texts[self.network.group_info_mesh.group_id_key]
+
+        group_info_mesh = self.network.simulation_gpu.group_info_mesh
+
+        self.group_info_panel.group_ids_combobox().add_items(group_info_mesh.group_id_texts.keys())
+        self.group_info_panel.g_flags_combobox().add_items(group_info_mesh.G_flags_texts.keys())
+        self.group_info_panel.g_props_combobox().add_items(group_info_mesh.G_props_texts.keys())
+        g_txt = group_info_mesh.group_id_texts[group_info_mesh.group_id_key]
         self.group_info_panel.g2g_info_combo_box.init_src_group_combo_box(g_txt)
-        self.group_info_panel.g2g_info_combo_box().add_items(self.network.group_info_mesh.G2G_info_texts.keys())
+        self.group_info_panel.g2g_info_combo_box().add_items(group_info_mesh.G2G_info_texts.keys())
 
         self.group_info_panel.group_ids_combobox.connect(self.group_id_combo_box_text_changed)
-        self.group_id_combo_box_text_changed(self.network.group_info_mesh.group_id_key)
+        self.group_id_combo_box_text_changed(group_info_mesh.group_id_key)
         self.group_info_panel.g_flags_combobox.connect(self.g_flags_combo_box_text_changed)
         self.group_info_panel.g_props_combobox.connect(self.g_props_combo_box_text_changed)
         self.group_info_panel.g2g_info_combo_box.connect(self.g2g_info_combo_box_text_changed)
@@ -219,16 +222,16 @@ class Engine(Application):
 
     def _connect_g_props_sliders(self, network_config):
         self.main_ui_panel.sliders.thalamic_inh_input_current.connect_property(
-            self.network.GPU.G_props,
+            self.network.neurons.G_props,
             network_config.InitValues.ThalamicInput.inh_current)
         self.main_ui_panel.sliders.thalamic_exc_input_current.connect_property(
-            self.network.GPU.G_props,
+            self.network.neurons.G_props,
             network_config.InitValues.ThalamicInput.exc_current)
         self.main_ui_panel.sliders.sensory_input_current0.connect_property(
-            self.network.GPU.G_props,
+            self.network.neurons.G_props,
             network_config.InitValues.SensoryInput.input_current0)
         self.main_ui_panel.sliders.sensory_input_current1.connect_property(
-            self.network.GPU.G_props,
+            self.network.neurons.G_props,
             network_config.InitValues.SensoryInput.input_current1)
 
     def _connect_main_buttons_and_actions(self):
@@ -248,7 +251,7 @@ class Engine(Application):
 
     def group_id_combo_box_text_changed(self, s):
         print(s)
-        clim = self.network.group_info_mesh.set_group_id_text(s)
+        clim = self.network.simulation_gpu.group_info_mesh.set_group_id_text(s)
         self._set_g2g_color_bar_clim(clim)
 
     @staticmethod
@@ -354,8 +357,8 @@ class Engine(Application):
     # noinspection PyUnusedLocal
     def update(self, event):
         if self.update_switch is True:
-            self.network.GPU.update()
-            t = self.network.GPU.Simulation.t
+            self.network.simulation_gpu.update()
+            t = self.network.simulation_gpu.Simulation.t
             t_str = str(t)
             if self.neuron_plot_window:
                 self.neuron_plot_window.voltage_plot_sc.update()
@@ -366,7 +369,7 @@ class Engine(Application):
                 self.main_window.group_info_scene.update()
                 # self.main_window.group_info_scene.table.t.text = t
             self.main_window.scene_3d.table.t.text = t_str
-            self.main_window.scene_3d.table.update_duration.text = str(self.network.GPU.Simulation.update_duration)
+            self.main_window.scene_3d.table.update_duration.text = str(self.network.simulation_gpu.Simulation.update_duration)
 
             if self.config.update_single_neuron_plots is True:
                 self.interfaced_neuron_collection.update_interfaced_neuron_plots(t)

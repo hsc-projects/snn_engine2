@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 import torch
 
-from .state_tensor import StateRow, StateTensor, NeuronStateRowCollection
-from network.visualized_elements.neurons import Neurons
+from .state_tensor import StateRow, StateTensor
+from network.gpu.visualized_elements import NeuronVisual
 import pandas as pd
 
 
@@ -83,7 +83,7 @@ class NeuronFlags(StateTensor):
     def select_ids_by_groups(self, groups, ntype=None):
         return self.id[self.select_by_groups(groups, ntype=ntype)]
 
-    def validate(self, neurons: Neurons, N_pos):
+    def validate(self, neurons: NeuronVisual, N_pos):
         if (self.type == 0).sum() > 0:
             raise AssertionError
 

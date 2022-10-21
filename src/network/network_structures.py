@@ -1,6 +1,6 @@
 from enum import IntEnum, unique
 
-from gpu.gpu_arrays import (
+from network.gpu.cpp_cuda_backend.gpu_arrays import (
     reshape_wrt_size,
     shape_size
 )
