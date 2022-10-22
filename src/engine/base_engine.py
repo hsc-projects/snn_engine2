@@ -1,7 +1,7 @@
 import qdarktheme
 import numba.cuda
 from PyQt6.QtWidgets import QApplication
-from typing import Optional
+# from typing import Optional
 from vispy.app import Application, Timer
 
 from .windows import (
@@ -11,7 +11,7 @@ from .windows import (
     MainUILeft,
     NeuronInterfaceWindow
 )
-from network import SpikingNeuralNetwork
+# from network import SpikingNeuralNetwork
 from network.network_config import PlottingConfig
 from .base_engine_config import EngineConfig
 
@@ -28,7 +28,7 @@ class Engine(Application):
 
         super().__init__(backend_name='pyqt6')
 
-        self.network: Optional[SpikingNeuralNetwork] = None
+        # self.network: Optional[SpikingNeuralNetwork] = None
 
         self._plotting_config: PlottingConfig = self.config.plotting
         self._group_info_view_mode = self._plotting_config.group_info_view_mode
@@ -152,6 +152,9 @@ class Engine(Application):
             self.main_window.scene_3d, self.main_window.scene_3d.network_view)
         self.main_ui_panel.add_3d_object_sliders(s)
 
+    def add_synapsevisual(self):
+        self.main_ui_panel.synapse_collapsible.add_interfaced_synapse(self.network, 0)
+
     def set_main_context_as_current(self):
         self.main_window.scene_3d.set_current()
 
@@ -175,12 +178,13 @@ class Engine(Application):
         if self.network.output_groups is not None:
             self.main_ui_panel.add_3d_object_sliders(self.network.output_groups)
 
-
         self._connect_g_props_sliders(network_config)
 
         self.connect_group_info_combo_box()
 
         self.network.interface_single_neurons(self)
+
+        self.main_ui_panel.synapse_collapsible.add_interfaced_synapse(self.network, 1)
 
     def connect_group_info_combo_box(self):
 
@@ -241,6 +245,7 @@ class Engine(Application):
         self.main_ui_panel.buttons.toggle_outergrid.clicked.connect(self.toggle_outergrid)
 
         self.main_ui_panel.buttons.add_selector_box.clicked.connect(self.add_selector_box)
+        self.main_ui_panel.buttons.add_synapsevisual.clicked.connect(self.add_synapsevisual)
 
         self.actions.start.triggered.connect(self.trigger_update_switch)
         self.actions.pause.triggered.connect(self.trigger_update_switch)
@@ -248,6 +253,7 @@ class Engine(Application):
         self.actions.toggle_outergrid.triggered.connect(self.toggle_outergrid)
 
         self.actions.add_selector_box.triggered.connect(self.add_selector_box)
+        self.actions.add_synapsevisual.triggered.connect(self.add_synapsevisual)
 
     def group_id_combo_box_text_changed(self, s):
         print(s)
@@ -264,7 +270,7 @@ class Engine(Application):
 
     def toggle_group_id_text(self):
         self._toggle_group_info_text(self.group_info_panel.group_ids_combobox(),
-                                     self.network.group_info_mesh.group_id_key)
+                                     self.network.simulation_gpu.group_info_mesh.group_id_key)
 
     def toggle_g_flags_text(self):
         self._toggle_group_info_text(self.group_info_panel.g_flags_combobox(), self.last_g_flags_text)
@@ -289,7 +295,7 @@ class Engine(Application):
 
             self.actions.toggle_g_flags.setChecked(False)
         print(s)
-        clim = self.network.group_info_mesh.set_g_flags_text(s)
+        clim = self.network.simulation_gpu.group_info_mesh.set_g_flags_text(s)
         self._set_g2g_color_bar_clim(clim)
 
     def g_props_combo_box_text_changed(self, s):
@@ -301,7 +307,7 @@ class Engine(Application):
         else:
             self.actions.toggle_g_props.setChecked(False)
         print(s)
-        clim = self.network.group_info_mesh.set_g_props_text(s)
+        clim = self.network.simulation_gpu.group_info_mesh.set_g_props_text(s)
         self._set_g2g_color_bar_clim(clim)
 
     def g2g_info_combo_box_text_changed(self, s):
@@ -313,7 +319,7 @@ class Engine(Application):
         # else:
             self.actions.toggle_g_props.setChecked(False)
         print(g, t)
-        clim = self.network.group_info_mesh.set_g2g_info_txt(int(g), t)
+        clim = self.network.simulation_gpu.group_info_mesh.set_g2g_info_txt(int(g), t)
         self._set_g2g_color_bar_clim(clim)
 
     def toggle_outergrid(self):
@@ -369,7 +375,8 @@ class Engine(Application):
                 self.main_window.group_info_scene.update()
                 # self.main_window.group_info_scene.table.t.text = t
             self.main_window.scene_3d.table.t.text = t_str
-            self.main_window.scene_3d.table.update_duration.text = str(self.network.simulation_gpu.Simulation.update_duration)
+            self.main_window.scene_3d.table.update_duration.text = str(
+                self.network.simulation_gpu.Simulation.update_duration)
 
             if self.config.update_single_neuron_plots is True:
                 self.interfaced_neuron_collection.update_interfaced_neuron_plots(t)

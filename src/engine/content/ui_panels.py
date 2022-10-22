@@ -20,6 +20,7 @@ from engine.content.widgets.gui_element import (
 )
 from engine.content.widgets.rendered_object_collapsible import RenderedObjectCollapsible
 from .neuron_properties_collapsible import SingleNeuronCollapsible, SingleNeuronCollapsibleContainer
+from .synapse_collapsible import SynapseCollapsible, SynapseCollapsibleContainer
 from engine.content.widgets.collapsible_widget.collapsible_widget import CollapsibleWidget
 from .widgets.spin_box_sliders import SpinBoxSlider
 from network import SpikingNeuralNetwork, PlottingConfig
@@ -62,6 +63,10 @@ class ButtonMenuActions:
     ADD_SELECTOR_BOX: ButtonMenuAction = ButtonMenuAction(menu_name='&Add SelectorBox',
                                                           name='Add SelectorBox',
                                                           status_tip='Add SelectorBox')
+
+    ADD_SYNAPSEVISUAL: ButtonMenuAction = ButtonMenuAction(menu_name='&Add SynapseVisual',
+                                                           name='Add SynapseVisual',
+                                                           status_tip='Add SynapseVisual')
 
     ACTUALIZE_G_FLAGS_TEXT: ButtonMenuAction = ButtonMenuAction(menu_name='&Refresh displayed G_flags',
                                                                 menu_short_cut='F7',
@@ -107,12 +112,8 @@ class ButtonMenuActions:
         print()
         for k in dct:
             v = getattr(self, k)
-            if isinstance(v, ButtonMenuAction):
-                if (v.menu_short_cut is not None) and (v.status_tip is not None):
-                    v.status_tip = v.status_tip + f" ({v.menu_short_cut})"
-                    print(v.status_tip)
-                if v.window is None:
-                    v.window = self.window
+            if isinstance(v, ButtonMenuAction) and (v.window is None):
+                v.window = self.window
 
 
 class MenuBar(QMenuBar):
@@ -124,6 +125,7 @@ class MenuBar(QMenuBar):
             self.exit: QAction = ButtonMenuActions.EXIT_APP.action()
 
             self.add_selector_box: QAction = ButtonMenuActions.ADD_SELECTOR_BOX.action()
+            self.add_synapsevisual: QAction = ButtonMenuActions.ADD_SYNAPSEVISUAL.action()
 
             self.toggle_groups_ids: QAction = ButtonMenuActions.TOGGLE_GROUP_IDS_TEXT.action()
             self.toggle_g_flags: QAction = ButtonMenuActions.TOGGLE_G_FLAGS_TEXT.action()
@@ -149,6 +151,7 @@ class MenuBar(QMenuBar):
 
         self.objects_menu = self.addMenu('&Objects')
         self.objects_menu.addAction(self.actions.add_selector_box)
+        self.objects_menu.addAction(self.actions.add_synapsevisual)
 
         self.view_menu = self.addMenu('&View')
         self.view_menu.addAction(self.actions.toggle_outergrid)
@@ -182,7 +185,7 @@ class UIPanel(QScrollArea):
 
 class NeuronsCollapsible(CollapsibleWidget, SingleNeuronCollapsibleContainer):
 
-    def __init__(self, title, parent=None):
+    def __init__(self, title='Neurons', parent=None):
 
         CollapsibleWidget.__init__(self, title=title, parent=parent)
         SingleNeuronCollapsibleContainer.__init__(self)
@@ -207,6 +210,7 @@ class MainUILeft(UIPanel):
             self.start: QPushButton = ButtonMenuActions.START_SIMULATION.button()
             self.pause: QPushButton = ButtonMenuActions.PAUSE_SIMULATION.button()
             self.exit: QPushButton = ButtonMenuActions.EXIT_APP.button()
+            self.add_synapsevisual: QPushButton = ButtonMenuActions.ADD_SYNAPSEVISUAL.button()
             self.add_selector_box: QPushButton = ButtonMenuActions.ADD_SELECTOR_BOX.button()
             self.toggle_outergrid: QPushButton = ButtonMenuActions.TOGGLE_OUTERGRID.button()
 
@@ -278,7 +282,9 @@ class MainUILeft(UIPanel):
         # self.neuron0: Optional[SingleNeuronCollapsible] = None
         # self.neuron1 = None
         if plotting_config.windowed_neuron_interfaces is False:
-            self.neurons_collapsible = NeuronsCollapsible(parent=self, title='Neuron Info')
+            self.neurons_collapsible = NeuronsCollapsible(parent=self)
+        self.synapse_collapsible = SynapseCollapsibleContainer(parent=self)
+        self.synapse_collapsible.add(self.buttons.add_synapsevisual)
         self.sensory_input_collapsible = CollapsibleWidget(self, title='Sensory Input')
         self.sensory_input_collapsible.add(self.sliders.sensory_input_current0.widget)
         self.sensory_input_collapsible.add(self.sliders.sensory_input_current1.widget)
@@ -296,6 +302,7 @@ class MainUILeft(UIPanel):
         self.addWidget(self.buttons.toggle_outergrid)
         if plotting_config.windowed_neuron_interfaces is False:
             self.addWidget(self.neurons_collapsible)
+        self.addWidget(self.synapse_collapsible)
         self.addWidget(self.weights_collapsible)
         self.addWidget(self.sensory_input_collapsible)
         self.addWidget(self.thalamic_input_collapsible)

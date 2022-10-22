@@ -66,6 +66,9 @@ class ButtonMenuAction(GUIElement):
     def __post_init__(self):
         if (self.connects is not None) and (not isinstance(self.connects, list)):
             self.connects = [self.connects]
+        if (self.menu_short_cut is not None) and (self.status_tip is not None):
+            self.status_tip = self.status_tip + f" ({self.menu_short_cut})"
+            print(self.status_tip)
 
     def _set_menu_short_cut(self, obj: Union[QAction, QPushButton]):
         if self.menu_short_cut is not None:

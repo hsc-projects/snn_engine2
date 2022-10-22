@@ -34,7 +34,7 @@ class MainSceneCanvas(BaseEngineSceneCanvas):
 
         self.unfreeze()
 
-        self.network: SpikingNeuralNetwork = app.network
+        self.network: Optional[SpikingNeuralNetwork] = None
 
         self.n_voltage_plots = plotting_config.n_voltage_plots
         self.voltage_plot_length = plotting_config.voltage_plot_length

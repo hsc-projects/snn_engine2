@@ -1,6 +1,9 @@
 #include <utils/curand_states.cuh>
 #include <utils/launch_parameters.cuh>
 
+#include <pybind11/include/pybind11/pybind11.h>
+namespace py = pybind11;
+
 
 struct SnnRepresentation
 {
@@ -55,6 +58,40 @@ struct SnnRepresentation
         int* L_winner_take_all_map_,
         int max_n_winner_take_all_layers_,
         int max_winner_take_all_layer_size_
+    );
+
+    void fill_N_rep(
+        const int* cc_src,
+        const int* cc_snk,
+        const int* G_rep,
+        const int* G_neuron_counts,
+        int* G_autapse_indices,
+        int* G_relative_autapse_indices,
+        bool has_autapses,
+        int gc_location0,
+        int gc_location1,
+        int gc_conn_shape0,
+        int gc_conn_shape1,
+        const int* cc_syn,
+        int* sort_keys,
+        const int N_flags_row_group,
+        bool verbose
+    );
+
+    void fill_N_rep_python(
+        const long cc_src_dp,
+        const long cc_snk_dp,
+        const long G_rep_dp,
+        const long G_neuron_counts_dp,
+        long G_autapse_indices_dp,
+        long G_relative_autapse_indices_dp,
+        bool has_autapses,
+        const py::tuple& gc_location,
+        const py::tuple& gc_conn_shape,
+        long cc_syn_dp,
+        long sort_keys_dp,
+        const int N_flags_row_group,
+        bool verbose
     );
     
 

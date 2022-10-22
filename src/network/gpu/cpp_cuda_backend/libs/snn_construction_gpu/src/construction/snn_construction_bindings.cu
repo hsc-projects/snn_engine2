@@ -75,8 +75,6 @@ SnnRepresentation make_SnnRepresentation(
 }
 
 
-
-
 PYBIND11_MODULE(snn_construction2_gpu, m)
     {
         
@@ -85,6 +83,20 @@ PYBIND11_MODULE(snn_construction2_gpu, m)
     .def_readonly("G", &SnnRepresentation::G)
     .def_readonly("S", &SnnRepresentation::S)
     .def_readonly("D", &SnnRepresentation::D)
+    .def("fill_N_rep", &SnnRepresentation::fill_N_rep_python, 
+        py::arg("cc_src"),
+        py::arg("cc_snk"),
+        py::arg("G_rep"),
+        py::arg("G_neuron_counts"),
+        py::arg("G_autapse_indices"),
+        py::arg("G_relative_autapse_indices"),
+        py::arg("has_autapses"),
+        py::arg("gc_location"),
+        py::arg("gc_conn_shape"),
+        py::arg("cc_syn"),
+        py::arg("sort_keys"),
+        py::arg("N_flags_row_group") = 2,
+        py::arg("verbose") = false)
     .def("swap_groups", &SnnRepresentation::swap_groups_python)
     .def("actualize_N_rep_pre_synaptic", &SnnRepresentation::actualize_N_rep_pre_synaptic)
     .def("remove_synapses_to_group", &SnnRepresentation::remove_all_synapses_to_group, 
@@ -117,4 +129,5 @@ PYBIND11_MODULE(snn_construction2_gpu, m)
         py::arg("max_n_winner_take_all_layers"),
         py::arg("max_winner_take_all_layer_size")
     );
+
 }

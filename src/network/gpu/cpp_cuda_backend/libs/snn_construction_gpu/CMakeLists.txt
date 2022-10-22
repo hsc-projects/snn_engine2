@@ -16,7 +16,7 @@ find_package(PythonInterp 3.9 REQUIRED)
 find_package(PythonLibs 3.9 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-get_filename_component(PROJECT_INC_DIRECTORY ../../../../inc ABSOLUTE)
+get_filename_component(PROJECT_INC_DIRECTORY ../../../../../../inc ABSOLUTE)
 
 include_directories(
     ./src/

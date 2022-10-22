@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from network import (
     NetworkConfig,
     PlottingConfig,
@@ -10,6 +12,7 @@ from network.gpu.neurons import NeuronRepresentation
 from network.gpu.synapses import SynapseRepresentation
 from engine import EngineConfig, Engine
 from network.gpu.simulation import NetworkSimulationGPU
+from network.network_config import NetworkInitValues
 
 
 class RateNetwork0GPU(NetworkSimulationGPU):
@@ -65,6 +68,15 @@ class RateNetwork0(SpikingNeuralNetwork):
 
 class RateNetwork0Config(EngineConfig):
 
+    class InitValues(NetworkInitValues):
+
+        @dataclass
+        class Weights:
+            Inh2Exc: float = '-r'
+            Exc2Inh: float = 'r'
+            Exc2Exc: float = 'r'
+            SensorySource: float = 1.5
+
     N: int = 5 * 10 ** 2
     T: int = 5000  # Max simulation record duration
 
@@ -76,7 +88,7 @@ class RateNetwork0Config(EngineConfig):
                             N_pos_shape=(4, 4, 1),
                             sim_updates_per_frame=1,
                             stdp_active=True,
-                            debug=False, InitValues=EngineConfig.InitValues())
+                            debug=False, InitValues=InitValues())
 
     plotting = PlottingConfig(n_voltage_plots=10,
                               voltage_plot_length=200,

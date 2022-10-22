@@ -13,7 +13,6 @@ from engine.content.widgets.combobox_frame import ComboBoxFrame
 from .scenes import SingleNeuronPlotCanvas
 from interfaces import NeuronInterface
 
-# from network import SpikingNeuralNetwork
 from network.network_state import (
     MultiModelNeuronStateTensor,
     IzhikevichModel,
@@ -26,11 +25,11 @@ from network import SpikingNeuralNetwork, PlottingConfig
 
 class NeuronIDFrame(SubCollapsibleFrame):
 
-    def __init__(self, parent, N: int, fixed_width=300):
+    def __init__(self, parent, N: int, fixed_width=300, label='ID'):
 
         super().__init__(parent, fixed_width=fixed_width)
 
-        self.layout().addWidget(QLabel('ID'))
+        self.layout().addWidget(QLabel(label))
         self.spinbox = QSpinBox(self)
         self.layout().addWidget(self.spinbox)
         self.spinbox.setMinimum(0)
@@ -255,10 +254,6 @@ class SingleNeuronCollapsibleContainer:
         if not hasattr(self, 'plotting_config'):
             self.plotting_config: Optional[PlottingConfig] = None
 
-    @property
-    def interfaced_neurons_list(self):
-        return list(self.interfaced_neurons_dct.values())
-
     def add_interfaced_neuron(self, network: SpikingNeuralNetwork, app,
                               title=None,
                               neuron_model=MultiModelNeuronStateTensor,
@@ -286,23 +281,6 @@ class SingleNeuronCollapsibleContainer:
 
         return neuron_collapsible
 
-    def update_interfaced_neuron_plots(self, t):
-        t_mod = t % self.plotting_config.voltage_plot_length
-        for n in self.interfaced_neurons_list:
-            n.update_plots(t, t_mod)
-
-    def interface_neuron(self, interfaced_neuron_index, neuron_id, preset=None):
-        self.interfaced_neurons_list[interfaced_neuron_index].set_id(neuron_id)
-        if preset is not None:
-            self.set_neuron_model_preset(interfaced_neuron_index=interfaced_neuron_index, preset=preset)
-
-    def set_neuron_model_preset(self, interfaced_neuron_index, preset):
-        self.interfaced_neurons_list[interfaced_neuron_index].set_preset(preset)
-
-    def unregister_registered_buffers(self):
-        for n in self.interfaced_neurons_list:
-            n.neuron_interface.plot.unregister_registered_buffers()
-
     def get_collapsible(self, id_):
         if isinstance(id_, SingleNeuronCollapsible):
             return id_
@@ -314,6 +292,35 @@ class SingleNeuronCollapsibleContainer:
             raise TypeError
         return nc
 
+    def interface_neuron(self, interfaced_neuron_index, neuron_id, preset=None):
+        self.interfaced_neurons_list[interfaced_neuron_index].set_id(neuron_id)
+        if preset is not None:
+            self.set_neuron_model_preset(interfaced_neuron_index=interfaced_neuron_index, preset=preset)
+
+    @property
+    def interfaced_neurons_list(self):
+        return list(self.interfaced_neurons_dct.values())
+
+    def set_neuron_model_preset(self, interfaced_neuron_index, preset):
+        self.interfaced_neurons_list[interfaced_neuron_index].set_preset(preset)
+
+    def unregister_registered_buffers(self):
+        for n in self.interfaced_neurons_list:
+            n.neuron_interface.plot.unregister_registered_buffers()
+
+    def update_interfaced_neuron_plots(self, t):
+        t_mod = t % self.plotting_config.voltage_plot_length
+        for n in self.interfaced_neurons_list:
+            n.update_plots(t, t_mod)
+
+    def sync_model_variables(self, neuron0, neuron1, bidirectional: bool = True):
+        neuron0: SingleNeuronCollapsible = self.get_collapsible(neuron0)
+        neuron1: SingleNeuronCollapsible = self.get_collapsible(neuron1)
+
+        neuron0.model_frame.sliders.sync_sliders(neuron1.model_frame.sliders)
+        if bidirectional is True:
+            neuron1.model_frame.sliders.sync_sliders(neuron0.model_frame.sliders)
+
     def sync_signal(self, neuron0, neuron1, bidirectional: bool = True):
         neuron0: SingleNeuronCollapsible = self.get_collapsible(neuron0)
         neuron1: SingleNeuronCollapsible = self.get_collapsible(neuron1)
@@ -323,11 +330,3 @@ class SingleNeuronCollapsibleContainer:
             neuron1.current_control_frame.sliders.sync_sliders(neuron0.current_control_frame.sliders)
         # neuron1.current_control_frame.sliders.disable()
         # neuron1.neuron_interface.current_injection_function = neuron0.neuron_interface.current_injection_function
-
-    def sync_model_variables(self, neuron0, neuron1, bidirectional: bool = True):
-        neuron0: SingleNeuronCollapsible = self.get_collapsible(neuron0)
-        neuron1: SingleNeuronCollapsible = self.get_collapsible(neuron1)
-
-        neuron0.model_frame.sliders.sync_sliders(neuron1.model_frame.sliders)
-        if bidirectional is True:
-            neuron1.model_frame.sliders.sync_sliders(neuron0.model_frame.sliders)

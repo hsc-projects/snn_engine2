@@ -318,24 +318,18 @@ class SynapseRepresentation(GPUArrayCollection):
             G_relative_autapse_indices = self.izeros((D, G))
             cc_syn = cc_syn_(gc)
 
-            snn_construction_gpu.fill_N_rep(
-                N=N, S=S, D=D, G=G,
-                curand_states=self.neurons.curand_states,
-                N_flags=self.neurons.N_flags.data_ptr(),
+            self.RepBackend.fill_N_rep(
                 cc_src=self.neurons.G_neuron_typed_ccount[ccn_idx_src: ccn_idx_src + G + 1].data_ptr(),
                 cc_snk=self.neurons.G_neuron_typed_ccount[ccn_idx_snk: ccn_idx_snk + G + 1].data_ptr(),
                 G_rep=self.neurons.g2g_info_arrays.G_rep.data_ptr(),
                 G_neuron_counts=self.neurons.G_neuron_counts[ct_row: ct_row+D, :].data_ptr(),
-                G_group_delay_counts=self.neurons.G_group_delay_counts.data_ptr(),
                 G_autapse_indices=G_autapse_indices.data_ptr(),
                 G_relative_autapse_indices=G_relative_autapse_indices.data_ptr(),
                 has_autapses=ccn_idx_src == ccn_idx_snk,
                 gc_location=gc.location,
                 gc_conn_shape=gc.conn_shape,
                 cc_syn=cc_syn.data_ptr(),
-                N_delays=self.N_delays.data_ptr(),
                 sort_keys=self.N_rep_buffer.data_ptr(),
-                N_rep=self.N_rep.data_ptr(),
                 verbose=False)
 
             if G_autapse_indices[1:, :].sum() != -(G_autapse_indices.shape[0] - 1) * G_autapse_indices.shape[1]:
@@ -413,8 +407,18 @@ class SynapseRepresentation(GPUArrayCollection):
 
     def init_N_weights(self, type_group_conns):
         for gc in type_group_conns:
-            self.N_weights[gc.location[1]: gc.location[1] + gc.conn_shape[1],
-                           gc.location[0]: gc.location[0] + gc.conn_shape[0]] = gc.w0
+            if not isinstance(gc.w0, str):
+                self.N_weights[gc.location[1]: gc.location[1] + gc.conn_shape[1],
+                               gc.location[0]: gc.location[0] + gc.conn_shape[0]] = gc.w0
+
+            elif (gc.w0 == 'r') or (gc.w0 == '-r'):
+                r = torch.rand((gc.conn_shape[1], gc.conn_shape[0]))
+                if gc.w0 == '-r':
+                    r = -r
+                self.N_weights[gc.location[1]: gc.location[1] + gc.conn_shape[1],
+                               gc.location[0]: gc.location[0] + gc.conn_shape[0]] = r
+            else:
+                raise NotImplementedError
 
     def _N_relative_G_indices(self):
         all_groups = self.neurons.N_flags.group.type(torch.int64)
@@ -615,4 +619,6 @@ class SynapseRepresentation(GPUArrayCollection):
 
         return a, b
 
-    
+    def unregister_registered_buffers(self):
+        super().unregister_registered_buffers()
+        self.visualized_synapses.unregister_registered_buffers()
