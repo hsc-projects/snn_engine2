@@ -1,3 +1,17 @@
+# Simulator (Work in Progress)
+
+Interactive simulation and visualisation of spatially extended spiking neural networks on the GPU.
+
+
+![sim_main](./docs_src/readme_images/simulator_main.png)
+
+
+
+![sim_main](./docs_src/readme_images/simulator_single_neuron_control.png)
+
+
+![sim_main](./docs_src/readme_images/simulator_multiplots.png)
+
 # Pheromonal Spatial Neural Networks
 
 We propose to utilize the volume surrounding a spatially extended network as an information buffer. 
@@ -446,19 +460,7 @@ eNeuro 7 May 2020, 7 (3) ENEURO.0533-19.2020.
 ...
 
 
-## Simulator (Work in Progress)
 
-Interactive simulation and visualisation of spatially extended spiking neural networks on the GPU.
-
-
-![sim_main](./docs_src/readme_images/simulator_main.png)
-
-
-
-![sim_main](./docs_src/readme_images/simulator_single_neuron_control.png)
-
-
-![sim_main](./docs_src/readme_images/simulator_multiplots.png)
 
 
 
