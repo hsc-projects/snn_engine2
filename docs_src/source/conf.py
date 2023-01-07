@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'SNN Engine'
-copyright = '2022, Mirkwood Moh'
-author = 'Mirkwood Moh'
+copyright = '2022, hsc'
+author = 'hsc'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.0'

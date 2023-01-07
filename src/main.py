@@ -11,7 +11,6 @@ from configured_networks.network0 import Network0Config
 # high priority
 
 # TODO: simulate chemical diffusion
-# TODO: build docs to ./docs instead of ./docs/html
 
 # medium priority
 

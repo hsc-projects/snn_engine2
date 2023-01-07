@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Neuron Models &#8212; SNN Engine 0.0.0 documentation</title>
+    <title>Simulation &#8212; SNN Engine 0.0.0 documentation</title>
 <script>
   document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
   document.documentElement.dataset.theme = localStorage.getItem("theme") || "light"
@@ -37,11 +37,10 @@
     <script src="../_static/doctools.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Simulation Update" href="simulation_update.html" />
-    <link rel="prev" title="Simulation" href="simulation.html" />
+    <link rel="next" title="Neuron Models" href="neuron_models.html" />
+    <link rel="prev" title="Synapses" href="../construction/synapses.html" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="docsearch:language" content="en">
   </head>
@@ -97,7 +96,7 @@
 </li>
 
 <li class="toctree-l1 current active nav-item">
- <a class="reference internal nav-link" href="simulation.html">
+ <a class="current reference internal nav-link" href="#">
   Simulation
  </a>
 </li>
@@ -145,9 +144,9 @@
   Contents:
  </span>
 </p>
-<ul class="current nav bd-sidenav">
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
+<ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="neuron_models.html">
    Neuron Models
   </a>
  </li>
@@ -179,24 +178,9 @@
     
     <div class="toc-item">
       
-<div class="tocsection onthispage mt-5 pt-1 pb-3">
-    <i class="fas fa-list"></i> On this page
-</div>
 
 <nav id="bd-toc-nav">
-    <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#izhikevich">
-   Izhikevich
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#rate-reduced-rulkov-model">
-   Rate Reduced Rulkov Model
-  </a>
- </li>
-</ul>
-
+    
 </nav>
     </div>
     
@@ -214,39 +198,20 @@
               
               <article class="bd-article" role="main">
                 
-  <section id="neuron-models">
-<h1>Neuron Models<a class="headerlink" href="#neuron-models" title="Permalink to this heading">#</a></h1>
-<section id="izhikevich">
-<h2>Izhikevich<a class="headerlink" href="#izhikevich" title="Permalink to this heading">#</a></h2>
-<p>Source: … (2003)</p>
-</section>
-<section id="rate-reduced-rulkov-model">
-<h2>Rate Reduced Rulkov Model<a class="headerlink" href="#rate-reduced-rulkov-model" title="Permalink to this heading">#</a></h2>
-<p>Source: A Rate-Reduced Neuron Model for Complex Spiking Behavior (2017)
-Koen Dijkstra, Yuri A. Kuznetsov, Michel J.A.M. van Putten,
-Stephan A. van Gils.</p>
-<div class="math notranslate nohighlight" id="equation-eq-va">
-<span class="eqno">(1)<a class="headerlink" href="#equation-eq-va" title="Permalink to this equation">#</a></span>\[\begin{split}v_{n+1} &amp;= f(v_n, v_{n-1}, \kappa u_n - a_n - \theta), \\
-a_{n+1} &amp;=  a_n - \epsilon (a_n + (1- \kappa) u_n - \gamma s_n).\end{split}\]</div>
-<p>where</p>
-<div class="math notranslate nohighlight" id="equation-eq-fx">
-<span class="eqno">(2)<a class="headerlink" href="#equation-eq-fx" title="Permalink to this equation">#</a></span>\[\begin{split}f(x_1, x_2, x_3) =
-\begin{cases}
-\frac{2500 + 150 x_1}{50 - x_1} + 50 x_3 &amp;\text{ if } x_1 &lt; 0, \\
-50 + 50 x_3 &amp; \text{ if } (0 \leq x_1 &lt; 50 + 50 x_3) \land (x_{2} &lt; 0)), \\
--50 &amp; \text{otherwise},
-\end{cases}\end{split}\]</div>
-<p>and</p>
-<div class="math notranslate nohighlight" id="equation-eq-sn">
-<span class="eqno">(3)<a class="headerlink" href="#equation-eq-sn" title="Permalink to this equation">#</a></span>\[\begin{split}s_n = \begin{cases}
-1 &amp; \text{ if the neuron spiked at iteration }n, \\
-0 &amp; \text{ otherwise.}
-\end{cases}\end{split}\]</div>
-<p>A Rulkov neuron spikes at iteration n if its membrane potential is reset to <span class="math notranslate nohighlight">\(v_{n+1} = 50\)</span> in the next iteration.
-It follows from (2) that the spiking condition in (3) is satisfied if and only if</p>
-<div class="math notranslate nohighlight">
-\[v_n \qquad \land \qquad \big((v_n \geq 50 + 50 (\kappa u_n - a_n - \theta) \qquad \lor \qquad (v_{n+1} \geq 0))\big).\]</div>
-</section>
+  <section id="simulation">
+<h1>Simulation<a class="headerlink" href="#simulation" title="Permalink to this heading">#</a></h1>
+<div class="toctree-wrapper compound">
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="neuron_models.html">Neuron Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="neuron_models.html#izhikevich">Izhikevich</a></li>
+<li class="toctree-l2"><a class="reference internal" href="neuron_models.html#rate-reduced-rulkov-model">Rate Reduced Rulkov Model</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="simulation_update.html">Simulation Update</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stdp.html">R-STDP</a></li>
+</ul>
+</div>
 </section>
 
 
@@ -257,17 +222,17 @@ It follows from (2) that the spiking condition in (3) is satisfied if and only i
               <footer class="bd-footer-article">
                   <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-  <a class='left-prev' id="prev-link" href="simulation.html" title="previous page">
+  <a class='left-prev' id="prev-link" href="../construction/synapses.html" title="previous page">
       <i class="fas fa-angle-left"></i>
       <div class="prev-next-info">
           <p class="prev-next-subtitle">previous</p>
-          <p class="prev-next-title">Simulation</p>
+          <p class="prev-next-title">Synapses</p>
       </div>
   </a>
-  <a class='right-next' id="next-link" href="simulation_update.html" title="next page">
+  <a class='right-next' id="next-link" href="neuron_models.html" title="next page">
   <div class="prev-next-info">
       <p class="prev-next-subtitle">next</p>
-      <p class="prev-next-title">Simulation Update</p>
+      <p class="prev-next-title">Neuron Models</p>
   </div>
   <i class="fas fa-angle-right"></i>
   </a>
@@ -288,7 +253,7 @@ It follows from (2) that the spiking condition in (3) is satisfied if and only i
   
   <div class="footer-item">
     <p class="copyright">
-    &copy; Copyright 2022, Mirkwood Moh.<br>
+    &copy; Copyright 2023, hsc.<br>
 </p>
   </div>
   
