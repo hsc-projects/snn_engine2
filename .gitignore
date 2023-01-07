@@ -191,3 +191,4 @@ cython_debug/
 /src/rendering/memcpy3d_test.py
 /src/rendering/surface2d.py
 /src/rendering/texture3d_.py
+/inc/pybind11/
