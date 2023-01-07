@@ -56,6 +56,15 @@ class GUIElement:
         self._set_disabled(obj)
 
 
+class PushButton(QPushButton):
+
+    def __init__(self, name, *args):
+        QPushButton.__init__(self, name, *args)
+        self.setFixedHeight(28)
+        if name is None:
+            self.setFixedWidth(28)
+
+
 @dataclass
 class ButtonMenuAction(GUIElement):
     menu_name: Optional[str] = None
@@ -86,10 +95,7 @@ class ButtonMenuAction(GUIElement):
 
     def button(self):
         if self._button is None:
-            self._button = QPushButton(self.name, self.window)
-            self._button.setFixedHeight(28)
-            if self.name is None:
-                self._button.setFixedWidth(28)
+            self._button: QPushButton = PushButton(self.name, self.window)
             self._init(self._button)
             if self.connects is not None:
                 for callable_ in self.connects:

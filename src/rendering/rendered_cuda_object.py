@@ -1,5 +1,5 @@
 from .rendered_object import RenderedObjectNode
-from network.gpu.cpp_cuda_backend import RegisteredGPUArray
+from .gpu_arrays import RegisteredGPUArray, RegisteredVBO
 
 
 class CudaObject:
@@ -60,5 +60,4 @@ class RenderedCudaObjectNode(RenderedObjectNode, CudaObject):
         CudaObject.__init__(self)
 
     def face_color_array(self, mesh_data, buffer):
-        from network.gpu.cpp_cuda_backend import RegisteredVBO
         return RegisteredVBO(buffer=buffer, shape=(mesh_data.n_faces * 3, 4), device=self._cuda_device)

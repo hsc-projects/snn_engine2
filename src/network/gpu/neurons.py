@@ -13,14 +13,15 @@ from network.network_state import (
 )
 from network.network_structures import NeuronTypeGroup, NeuronTypes, NeuronTypeGroupConnection
 from network.network_grid import NetworkGrid
-from network.gpu.visualized_elements import NeuronVisual
+from network.gpu.visualized_elements.neuron_visual import NeuronVisual
 from network.gpu.visualized_elements.boxes import SelectedGroups
 
 # noinspection PyUnresolvedReferences
 from network.gpu.cpp_cuda_backend import (
     snn_construction_gpu,
     snn_simulation_gpu,
-    GPUArrayConfig,
+)
+from rendering import (
     RegisteredVBO,
     GPUArrayCollection
 )

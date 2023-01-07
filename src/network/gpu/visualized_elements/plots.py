@@ -4,8 +4,13 @@ from typing import Optional
 from vispy.scene import visuals
 # from vispy.visualized_elements.transforms import STTransform
 
-from rendering import RenderedObjectNode, RenderedCudaObjectNode, CudaLine
-from network.gpu.cpp_cuda_backend import RegisteredVBO, GPUArrayCollection
+from rendering import (
+    RenderedObjectNode,
+    RenderedCudaObjectNode,
+    CudaLine,
+    RegisteredVBO,
+    GPUArrayCollection
+)
 
 
 class PlotData:

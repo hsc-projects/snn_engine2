@@ -1,7 +1,12 @@
 from dataclasses import dataclass, asdict
-from .network_grid import NetworkGrid
 import numpy as np
 from typing import Optional, Union
+
+import pandas as pd
+
+from .network_grid import NetworkGrid
+from utils import boxed_string
+from .chemical_config import ChemicalConfig, ChemicalConfigCollection, DefaultChemicals
 
 
 class NetworkInitValues:
@@ -65,16 +70,18 @@ class NetworkConfig:
 
     grid: Optional[NetworkGrid] = None
 
+    chemical_configs: Optional[Union[list[ChemicalConfig],
+                                     ChemicalConfig,
+                                     ChemicalConfigCollection,
+                                     DefaultChemicals]] = None
+
     def __str__(self):
         name = self.__class__.__name__
-        line = '-' * len(name)
-        m0 = f'\n  +--{line}--+' \
-             f'\n  |  {name}  |' \
-             f'\n  +--{line}--+' \
-             f'\n\tN={self.N}, \n\tS={self.S}, \n\tD={self.D}, \n\tG={self.G},'
-        m1 = f'\n\tN_pos_shape={self.N_pos_shape},'
-        m2 = f'\n\tgrid_segmentation={self.grid_segmentation}\n'
-        return m0 + m1 + m2
+        msg = boxed_string(name)
+        msg += f'\n\tN={self.N}, \n\tS={self.S}, \n\tD={self.D}, \n\tG={self.G},'
+        msg += f'\n\tN_pos_shape={self.N_pos_shape},'
+        msg += f'\n\tgrid_segmentation={self.grid_segmentation}\n'
+        return msg
 
     def __post_init__(self):
 
@@ -116,6 +123,20 @@ class NetworkConfig:
 
         if self.grid is None:
             self.grid = NetworkGrid(self)
+
+        if self.chemical_configs is not None:
+            if not isinstance(self.chemical_configs, ChemicalConfigCollection):
+                chemical_configs = self.chemical_configs
+                if not isinstance(self.chemical_configs, list):
+                    chemical_configs = [self.chemical_configs]
+                names = []
+                for chem in chemical_configs:
+                    assert isinstance(chem, ChemicalConfig)
+                    names.append(chem.name)
+                assert not bool(pd.Series(names).duplicated().any())
+                self.chemical_configs = ChemicalConfigCollection()
+                for chem in chemical_configs:
+                    setattr(self.chemical_configs, chem.name, chem)
 
 
 @dataclass(frozen=True)

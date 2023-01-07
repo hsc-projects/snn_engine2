@@ -1,7 +1,7 @@
 from vispy.scene.visuals import Line
 from typing import Optional
 
-from network.gpu.cpp_cuda_backend import RegisteredVBO
+from .gpu_arrays import RegisteredVBO
 from .rendered_cuda_object import CudaObject
 from .rendered_object import get_buffer_id
 

@@ -12,3 +12,7 @@ from .cuda_box import CudaBox
 from .cuda_box_arrows import ArrowVisual, GridArrow, InteractiveBoxNormals
 from .cuda_line import CudaLine
 from .visuals import BoxSystemLineVisual, GSLineVisual
+from .gpu_arrays import (
+    RegisteredGPUArray, GPUArrayCollection, RegisteredVBO, RegisteredImage,
+    RegisteredTexture3D, GPUArrayConfig
+)

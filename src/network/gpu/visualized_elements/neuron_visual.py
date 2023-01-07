@@ -3,12 +3,11 @@ import torch
 
 from vispy.scene import visuals
 
-from rendering import RenderedCudaObjectNode
+from rendering import RenderedCudaObjectNode, RegisteredVBO
 from geometry import grid_coordinates, validate_pos
 from network.network_config import NetworkConfig
 from network.network_grid import NetworkGrid
 from network.network_structures import NeuronTypes
-from network.gpu.cpp_cuda_backend import RegisteredVBO
 
 
 # noinspection PyAbstractClass

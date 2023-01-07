@@ -11,12 +11,12 @@ from network.gpu.visualized_elements.synapse_visuals import VisualizedSynapsesCo
 from network.gpu.cpp_cuda_backend import (
     snn_construction_gpu,
     snn_construction2_gpu,
-    snn_simulation_gpu,
-    GPUArrayConfig,
-    RegisteredVBO,
-    GPUArrayCollection
+    snn_simulation_gpu
 )
 from network.gpu.neurons import NeuronRepresentation
+from rendering import (
+    GPUArrayCollection
+)
 
 
 # noinspection PyPep8Naming
@@ -583,6 +583,7 @@ class SynapseRepresentation(GPUArrayCollection):
                 torch.repeat_interleave(neuron_group_indices_aranged, group_neuron_counts_typed[0][i + 1].ravel()))
             neuron_group_indices[n_inh_core_neurons:total_sums[i+1]] = (
                 torch.repeat_interleave(neuron_group_indices_aranged, group_neuron_counts_typed[1][i + 1].ravel()))
+
             self._single_group_swap(
                 program=program,
                 group_neuron_counts_total=group_neuron_counts_total[i:i + 3],

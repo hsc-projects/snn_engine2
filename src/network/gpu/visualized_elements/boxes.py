@@ -24,7 +24,7 @@ from rendering import (
     RenderedCudaObjectNode,
     GridArrow
 )
-from network.gpu.cpp_cuda_backend import RegisteredVBO, GPUArrayCollection
+from rendering import RegisteredVBO, GPUArrayCollection
 from network.network_grid import NetworkGrid
 from network.gpu.visualized_elements.group_mesh_visual import GroupMeshVisual
 
@@ -354,7 +354,7 @@ class GroupInfo(GroupBoxesBase):
         colors = c.map(values[self.face_group_ids])
         colors[:, 3] = .7
         colors = np.repeat(colors, 6, axis=0)
-        self.colors_gpu._tensor[:] = torch.from_numpy(colors).to(self._cuda_device)
+        self.colors_gpu.tensor[:] = torch.from_numpy(colors).to(self._cuda_device)
         return i0, i1
 
     def init_cuda_arrays(self):

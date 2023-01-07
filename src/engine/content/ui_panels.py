@@ -4,7 +4,6 @@ from typing import Optional
 from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
-    QFrame,
     QHBoxLayout,
     QMainWindow,
     QMenuBar,
@@ -19,12 +18,14 @@ from engine.content.widgets.gui_element import (
     ButtonMenuAction
 )
 from engine.content.widgets.rendered_object_collapsible import RenderedObjectCollapsible
-from .neuron_properties_collapsible import SingleNeuronCollapsible, SingleNeuronCollapsibleContainer
-from .synapse_collapsible import SynapseCollapsible, SynapseCollapsibleContainer
 from engine.content.widgets.collapsible_widget.collapsible_widget import CollapsibleWidget
-from .widgets.spin_box_sliders import SpinBoxSlider
 from network import SpikingNeuralNetwork, PlottingConfig
 from network.network_state import MultiModelNeuronStateTensor
+from .neuron_properties_collapsible import SingleNeuronCollapsible, SingleNeuronCollapsibleContainer
+from .synapse_collapsible import SynapseCollapsibleContainer
+from .chemical_control_collapsible import ChemicalControlCollapsibleContainer
+from utils import boxed_string
+from .widgets.spin_box_sliders import SpinBoxSlider
 
 
 @dataclass
@@ -35,7 +36,7 @@ class ButtonMenuActions:
     Declarative style. Must be initialized once.
 
     """
-
+    print('\n', boxed_string("Shortcuts"))
     window: Optional[QMainWindow] = None
 
     START_SIMULATION: ButtonMenuAction = ButtonMenuAction(menu_name='&Start Simulation',
@@ -283,6 +284,7 @@ class MainUILeft(UIPanel):
         # self.neuron1 = None
         if plotting_config.windowed_neuron_interfaces is False:
             self.neurons_collapsible = NeuronsCollapsible(parent=self)
+        self.chemical_collapsible = ChemicalControlCollapsibleContainer(parent=self)
         self.synapse_collapsible = SynapseCollapsibleContainer(parent=self)
         self.synapse_collapsible.add(self.buttons.add_synapsevisual)
         self.sensory_input_collapsible = CollapsibleWidget(self, title='Sensory Input')
@@ -300,6 +302,7 @@ class MainUILeft(UIPanel):
 
         self.addWidget(play_pause_widget)
         self.addWidget(self.buttons.toggle_outergrid)
+        self.addWidget(self.chemical_collapsible)
         if plotting_config.windowed_neuron_interfaces is False:
             self.addWidget(self.neurons_collapsible)
         self.addWidget(self.synapse_collapsible)

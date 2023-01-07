@@ -1,7 +1,3 @@
-from PyQt6.QtWidgets import (
-    QLabel,
-    QSpinBox
-)
 from typing import Optional
 
 from engine.content.widgets.collapsible_widget.collapsible_widget import CollapsibleWidget

@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from typing import Optional
 
 # from network.gpu.plotting import PlottingGPUArrays
 from network.network_config import NetworkConfig, PlottingConfig
@@ -9,13 +10,12 @@ from network.gpu.visualized_elements.boxes import GroupInfo
 # noinspection PyUnresolvedReferences
 from network.gpu.cpp_cuda_backend import (
     snn_construction_gpu,
-    snn_simulation_gpu,
-    GPUArrayConfig,
-    RegisteredVBO,
-    GPUArrayCollection
+    snn_simulation_gpu
 )
 from network.gpu.neurons import NeuronRepresentation
 from network.gpu.synapses import SynapseRepresentation
+from network.gpu.chemicals import ChemicalRepresentation
+from rendering import GPUArrayCollection
 
 
 # noinspection PyPep8Naming
@@ -29,7 +29,8 @@ class NetworkSimulationGPU(GPUArrayCollection):
                  neurons: NeuronRepresentation,
                  synapses: SynapseRepresentation,
                  plotting_config: PlottingConfig,
-                 group_firing_counts_plot_single1: GroupFiringCountsPlot
+                 group_firing_counts_plot_single1: GroupFiringCountsPlot,
+                 chemicals: Optional[ChemicalRepresentation] = None
                  ):
         super().__init__(device=device, bprint_allocated_memory=config.N > 1000)
 

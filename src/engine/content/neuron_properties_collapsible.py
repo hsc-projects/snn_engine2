@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import (

@@ -6,6 +6,7 @@ from vispy.visuals import MeshVisual
 
 from network.network_config import NetworkConfig
 from network.network_grid import NetworkGrid
+from rendering import RegisteredVBO
 
 
 class GroupMeshVisual(MeshVisual):
@@ -108,7 +109,6 @@ class GroupMeshVisual(MeshVisual):
         return vertices, faces, outline
 
     def face_color_array(self, device):
-        from network.gpu.cpp_cuda_backend import RegisteredVBO
         return RegisteredVBO(buffer=self.color_vbo, shape=(self._meshdata.n_faces * 3, 4), device=device)
 
     @staticmethod
@@ -126,7 +126,5 @@ class GroupMeshVisual(MeshVisual):
         return self.buffer_id(self.shared_program.vert['position'].id)
 
     def vbo_array(self, device):
-
-        from network.gpu.cpp_cuda_backend import RegisteredVBO
         return RegisteredVBO(buffer=self.pos_vbo, shape=(self._meshdata.n_faces * 3, 3), device=device)
 

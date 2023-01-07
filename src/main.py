@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from vispy import gloo
 import sys
 
@@ -6,20 +5,20 @@ from engine import Engine
 
 from configured_networks.io_network0 import IOSnn0Config
 from configured_networks.rate_network0 import RateNetwork0Config
+from configured_networks.network0 import Network0Config
 
 
 # high priority
 
-# TODO: ReLu-ANN
-# TODO: Synapse Visualization (incl. weight?)
-# TODO: Chemical Diffusion + Visualization
-# TODO: in-engine configuration/construction
-# TODO: -ax**2 + b connection probability
-# TODO: 1. minimalistic network; 2. rate network
-# TODO: 1. concentration volumes; 2. concentration diffusions
+# TODO: simulate chemical diffusion
+# TODO: build docs to ./docs instead of ./docs/html
 
 # medium priority
 
+# TODO: 1. minimalistic network; 2. rate network
+# TODO: in-engine configuration/construction
+# TODO: -ax**2 + b connection probability
+# TODO: ReLu-ANN
 # TODO: configurable segmentation
 # TODO: subgroups
 
@@ -27,6 +26,8 @@ from configured_networks.rate_network0 import RateNetwork0Config
 
 # # simulation
 
+# TODO: Error Handling
+# TODO: Docs
 # TODO: pre-synaptic delays
 # TODO: resonant cells/groups,
 # TODO: better sensory weights,
@@ -49,6 +50,7 @@ if __name__ == '__main__':
 
     gloo.gl.use_gl('gl+')
     # eng = Engine(IOSnn0Config())
-    eng = Engine(RateNetwork0Config())
+    # eng = Engine(RateNetwork0Config())
+    eng = Engine(Network0Config())
     if sys.flags.interactive != 1:
         eng.run()

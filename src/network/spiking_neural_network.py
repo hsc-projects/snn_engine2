@@ -1,13 +1,15 @@
 import numpy as np
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
-from .network_config import (
+from network.network_config import (
     NetworkConfig,
     PlottingConfig
 )
 from network.gpu.simulation import NetworkSimulationGPU
 from network.gpu.neurons import NeuronRepresentation
 from network.gpu.synapses import SynapseRepresentation
+# from network.gpu.chemicals import ChemicalRepresentation
+from network.chemical_config import ChemicalConfigCollection, DefaultChemicals
 from .network_structures import (
     NeuronTypes,
     NeuronTypeGroup,
@@ -101,6 +103,21 @@ class SpikingNeuralNetwork:
             neurons=self.neurons,
             device=config.device, shapes=self.neurons.data_shapes)
 
+        # self.chemicals = ChemicalRepresentation(
+        #     scene=engine.main_window.scene_3d,
+        #     view=engine.main_window.scene_3d.network_view,
+        #     elements=config.network.chemical_configs,
+        #     device=config.device
+        # ) if config.network.chemical_configs is not None else None
+
+        self.chemicals: Optional[Union[ChemicalConfigCollection,
+                                       DefaultChemicals]] = config.network.chemical_configs.super_init(
+            network_shape=self.network_config.N_pos_shape,
+            scene=engine.main_window.scene_3d,
+            view=engine.main_window.scene_3d.network_view,
+            device=config.device
+        ) if config.network.chemical_configs is not None else None
+
         self.simulation_gpu: Optional[NetworkSimulationGPU] = None
         # self.CPU: Optional[NetworkCPUArrays] = None
 
@@ -141,6 +158,7 @@ class SpikingNeuralNetwork:
             state_colors_attr='input_face_colors',
             compatible_groups=self.network_config.sensory_groups,
         )
+
         self.input_groups.init_cuda_attributes(
             self.simulation_gpu.device, self.neurons.G_flags, self.neurons.G_props)
         self.input_groups.src_weight = self.network_config.InitValues.Weights.SensorySource

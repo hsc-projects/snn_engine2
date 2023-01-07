@@ -186,6 +186,12 @@ class Engine(Application):
 
         self.main_ui_panel.synapse_collapsible.add_interfaced_synapse(self.network, 1)
 
+        if self.network.chemicals is not None:
+            self.main_ui_panel.chemical_collapsible.add_chemical_control_collapsibles(self.network.chemicals)
+
+    def connect_chemical_controls(self):
+        pass
+
     def connect_group_info_combo_box(self):
 
         group_info_mesh = self.network.simulation_gpu.group_info_mesh

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import torch
 
 from .state_tensor import StateRow, StateTensor
-from network.gpu.visualized_elements import NeuronVisual
+from network.gpu.visualized_elements.neuron_visual import NeuronVisual
 import pandas as pd
 
 
