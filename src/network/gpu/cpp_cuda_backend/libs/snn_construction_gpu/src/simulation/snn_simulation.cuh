@@ -104,6 +104,19 @@ struct SnnSimulation
     int max_n_winner_take_all_layers;
     int max_winner_take_all_layer_size;
 
+    int chem_grid_w;
+    int chem_grid_h;
+    int chem_grid_d;
+    float* C_old; 
+    float* C_new; 
+    float* C_source; 
+    const int chem_block_size = 8;
+    float chem_k_val = 0.75f; 
+	float chem_depreciation = 0.1f;
+    LaunchParameters lp_update_chemical_contrations;
+    bool b_update_chemical_contrations = false;
+
+
     SnnSimulation(
         int N_,
         int G_,
@@ -150,10 +163,23 @@ struct SnnSimulation
         int* G_syn_count_exc_,
         int* L_winner_take_all_map_,
         int max_n_winner_take_all_layers_,
-        int max_winner_take_all_layer_size_
+        int max_winner_take_all_layer_size_,
+
+        float* C_old_,
+        float* C_new_, 
+        float* C_source_, 
+        int chem_grid_w_,
+        int chem_grid_h_,
+        int chem_grid_d_,
+        float chem_k_val_, 
+        float chem_depreciation_
     );
+
+
+
     
     void update_plots();
+    void update_chemical_contrations();
     void print_info(bool bprint_idcs = false, bool bprint_nfiring_times = false);
     void update(bool b_stdp, bool verbose);
 
@@ -169,5 +195,8 @@ struct SnnSimulation
 
     // void remove_all_synapses_to_group(int group);
     // void nullify_all_weights_to_group(int group);
+
+    void set_b_update_chemical_contrations(bool b_update_chemical_contrations_);
+    bool get_b_update_chemical_contrations();
 
 };

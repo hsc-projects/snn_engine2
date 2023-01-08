@@ -41,6 +41,7 @@ SnnSimulation make_SnnSimulation(
     const long firing_times_dp,
     const long firing_idcs_dp,
     const long firing_counts_dp,
+
     const long G_firing_count_hist_dp,
     const long G_stdp_config0_dp,
     const long G_stdp_config1_dp,
@@ -50,7 +51,16 @@ SnnSimulation make_SnnSimulation(
     const long G_syn_count_exc_dp,
     const long L_winner_take_all_map_dp,
     const int max_n_winner_take_all_layers,
-    const int max_winner_take_all_layer_size
+    const int max_winner_take_all_layer_size,
+
+    const long C_old_dp,
+    const long C_new_dp, 
+    const long C_source_dp, 
+    const int chem_grid_w,
+    const int chem_grid_h,
+    const int chem_grid_d,
+    const float chem_k_val, 
+	const float chem_depreciation
 ){
     float* voltage_plot_data = reinterpret_cast<float*> (voltage_plot_data_dp);
     int* voltage_plot_map = reinterpret_cast<int*> (voltage_plot_map_dp);
@@ -93,6 +103,10 @@ SnnSimulation make_SnnSimulation(
     int* G_syn_count_exc = reinterpret_cast<int*> (G_syn_count_exc_dp);
 
     int* L_winner_take_all_map = reinterpret_cast<int*> (L_winner_take_all_map_dp);
+
+    float* C_old = reinterpret_cast<float*> (C_old_dp);
+    float* C_new = reinterpret_cast<float*> (C_new_dp);
+    float* C_source = reinterpret_cast<float*> (C_source_dp);
 
     
     return SnnSimulation(
@@ -137,7 +151,16 @@ SnnSimulation make_SnnSimulation(
         G_syn_count_exc,
         L_winner_take_all_map,
         max_n_winner_take_all_layers,
-        max_winner_take_all_layer_size
+        max_winner_take_all_layer_size,
+
+        C_old,
+        C_new,
+        C_source,
+        chem_grid_w,
+        chem_grid_h,
+        chem_grid_d,
+        chem_k_val, 
+        chem_depreciation
     );
 }
 
@@ -157,7 +180,12 @@ PYBIND11_MODULE(snn_simulation_gpu, m)
     .def_readonly("t", &SnnSimulation::t)
     .def_readonly("update_duration", &SnnSimulation::update_duration)
     .def_readwrite("stdp_active", &SnnSimulation::stdp_active)
+    .def_property("bupdate_chemical_contrations", 
+        &SnnSimulation::get_b_update_chemical_contrations,
+        &SnnSimulation::set_b_update_chemical_contrations
+    )
     .def("update", &SnnSimulation::update)
+    .def("update_chemical_contrations", &SnnSimulation::update_chemical_contrations)
     // .def("swap_groups", &SnnSimulation::swap_groups_python)
     .def("set_stdp_config", &SnnSimulation::set_stdp_config, 
         py::arg("stdp_config_id"), 
@@ -214,6 +242,14 @@ PYBIND11_MODULE(snn_simulation_gpu, m)
         py::arg("G_syn_count_exc"),
         py::arg("L_winner_take_all_map"),
         py::arg("max_n_winner_take_all_layers"),
-        py::arg("max_winner_take_all_layer_size")
+        py::arg("max_winner_take_all_layer_size"),
+        py::arg("C_old"),
+        py::arg("C_new"),
+        py::arg("C_source"),
+        py::arg("chem_grid_w") = 0,
+        py::arg("chem_grid_h") = 0,
+        py::arg("chem_grid_d") = 0,
+        py::arg("chem_k_val") = .75f,
+        py::arg("chem_depreciation") = 0.1f
     );
 }

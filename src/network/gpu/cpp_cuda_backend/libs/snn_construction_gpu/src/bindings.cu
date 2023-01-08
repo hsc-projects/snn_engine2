@@ -284,31 +284,6 @@ PYBIND11_MODULE(snn_construction_gpu, m)
           py::arg("G_exp_ccsyn_per_src_type_and_delay")
     );
 
-    // m.def("fill_N_rep", 
-    //       &fill_N_rep_python, 
-    //       py::arg("N"),
-    //       py::arg("S"),
-    //       py::arg("D"),
-    //       py::arg("G"),
-    //       py::arg("curand_states"),
-    //       py::arg("N_flags"),
-    //       py::arg("cc_src"),
-    //       py::arg("cc_snk"),
-    //       py::arg("G_rep"),
-    //       py::arg("G_neuron_counts"),
-    //       py::arg("G_group_delay_counts"),
-    //       py::arg("G_autapse_indices"),
-    //       py::arg("G_relative_autapse_indices"),
-    //       py::arg("has_autapses"),
-    //       py::arg("gc_location"),
-    //       py::arg("gc_conn_shape"),
-    //       py::arg("cc_syn"),
-    //       py::arg("N_delays"),
-    //       py::arg("sort_keys"),
-    //       py::arg("N_rep"),
-    //       py::arg("N_flags_row_group") = 2,
-    //       py::arg("verbose") = false);
-
     m.def("sort_N_rep", 
           &sort_N_rep_python, 
           py::arg("N"),

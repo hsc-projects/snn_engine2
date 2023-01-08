@@ -5,17 +5,18 @@ from engine import Engine
 
 from configured_networks.io_network0 import IOSnn0Config
 from configured_networks.rate_network0 import RateNetwork0Config
-from configured_networks.network0 import Network0Config
+from configured_networks.defaultnetwork0 import DefaultNetwork0Config
 
 
 # high priority
 
 # TODO: simulate chemical diffusion
+# TODO: in-engine configuration/construction
 
 # medium priority
 
+# TODO: C++/Cuda refactoring (remove snn_construction)
 # TODO: 1. minimalistic network; 2. rate network
-# TODO: in-engine configuration/construction
 # TODO: -ax**2 + b connection probability
 # TODO: ReLu-ANN
 # TODO: configurable segmentation
@@ -37,6 +38,7 @@ from configured_networks.network0 import Network0Config
 # TODO: weird synapse counts
 # TODO: low neuron count swaps
 # TODO: performance hit above 300K neurons
+# TODO: testing
 
 # # ui
 
@@ -50,6 +52,6 @@ if __name__ == '__main__':
     gloo.gl.use_gl('gl+')
     # eng = Engine(IOSnn0Config())
     # eng = Engine(RateNetwork0Config())
-    eng = Engine(Network0Config())
+    eng = Engine(DefaultNetwork0Config())
     if sys.flags.interactive != 1:
         eng.run()

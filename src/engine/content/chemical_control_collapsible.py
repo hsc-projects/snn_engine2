@@ -22,7 +22,7 @@ class ButtonFrame(SubCollapsibleFrame):
         self.button_visible: QPushButton = PushButton('visible', self)
         self.button_visible.setCheckable(True)
         self.button_visible.setChecked(True)
-        self.button_visible.clicked.connect(el.visual.toogle_visible)
+        self.button_visible.clicked.connect(el.visual.toggle_visible)
 
         self.button_add_10: QPushButton = PushButton('add', self)
         self.button_add_10.clicked.connect(el.visual.add)

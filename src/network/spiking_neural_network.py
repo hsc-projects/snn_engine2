@@ -103,20 +103,16 @@ class SpikingNeuralNetwork:
             neurons=self.neurons,
             device=config.device, shapes=self.neurons.data_shapes)
 
-        # self.chemicals = ChemicalRepresentation(
-        #     scene=engine.main_window.scene_3d,
-        #     view=engine.main_window.scene_3d.network_view,
-        #     elements=config.network.chemical_configs,
-        #     device=config.device
-        # ) if config.network.chemical_configs is not None else None
+        self.chemical_concentrations: Optional[Union[ChemicalConfigCollection,
+                                                     DefaultChemicals]] = (
+            config.network.chemical_configs if config.network.chemical_configs is not None
+            else ChemicalConfigCollection())
 
-        self.chemicals: Optional[Union[ChemicalConfigCollection,
-                                       DefaultChemicals]] = config.network.chemical_configs.super_init(
+        self.chemical_concentrations.super_init(
             network_shape=self.network_config.N_pos_shape,
             scene=engine.main_window.scene_3d,
             view=engine.main_window.scene_3d.network_view,
-            device=config.device
-        ) if config.network.chemical_configs is not None else None
+            device=config.device)
 
         self.simulation_gpu: Optional[NetworkSimulationGPU] = None
         # self.CPU: Optional[NetworkCPUArrays] = None
@@ -216,7 +212,12 @@ class SpikingNeuralNetwork:
         self.simulation_gpu.update()
 
     # noinspection PyPep8Naming
-    def initialize_GPU_arrays(self, device, engine, init_default_sim=False):
+    def initialize_GPU_arrays(self, device, engine, init_default_sim=False,
+                              init_default_sim_with_syn_post_init=False):
+
+        if init_default_sim is False:
+            assert init_default_sim_with_syn_post_init is False
+
         self.outer_grid: OuterGrid = OuterGrid(
             view=engine.main_window.scene_3d.network_view,
             shape=self.network_config.N_pos_shape,
@@ -225,19 +226,10 @@ class SpikingNeuralNetwork:
         engine.set_main_context_as_current()
 
         if init_default_sim is True:
-
-            self.simulation_gpu = NetworkSimulationGPU(
-                engine=engine,
-                config=self.network_config,
-                neurons=self.neurons,
-                synapses=self.synapse_arrays,
-                device=device,
-                T=self.T,
-                plotting_config=self.plotting_config,
-                group_firing_counts_plot_single1=self.group_firing_counts_plot_single1
-            )
-
+            self.simulation_gpu = NetworkSimulationGPU.from_snn(self, engine=engine, device=device)
             self.registered_buffers += self.simulation_gpu.registered_buffers
+            if init_default_sim_with_syn_post_init is True:
+                self.simulation_gpu._post_synapse_mod_init()
 
     def interface_single_neurons(self, engine):
         pass

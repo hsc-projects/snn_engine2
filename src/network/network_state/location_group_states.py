@@ -4,7 +4,7 @@ from typing import Optional
 import numpy as np
 import torch
 
-from rendering import RegisteredGPUArray, GPUArrayConfig, GPUArrayCollection, RegisteredVBO
+from rendering import RegisteredGPUArray, GPUArrayConfig, GPUArrayCollection, RegisteredIBO, RegisteredVBO
 from network.network_grid import NetworkGrid
 from network.network_config import NetworkConfig
 from network.network_state.state_tensor import StateTensor, StateRow, Sliders
@@ -35,11 +35,8 @@ class LocationGroupFlags(StateTensor):
         self._G = n_groups
 
         super().__init__(shape=(len(self._rows), n_groups), dtype=torch.int32, device=device)
-        nbytes = 4
-        self.selected_array = RegisteredGPUArray.from_buffer(
-            select_ibo, config=GPUArrayConfig(shape=(self._G+1, 1),
-                                              strides=(2 * nbytes, nbytes),
-                                              dtype=np.int32, device=device))
+
+        self.selected_array = RegisteredIBO(select_ibo, shape=(self._G+1, 1), device=device)
 
         # self.group_numbers_gpu: Optional[torch.Tensor] = None
         self.group_indices = None

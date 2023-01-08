@@ -19,6 +19,8 @@ class ChemicalConcentrationVolumeVisual(RenderedCudaObjectNode):
         scene.set_current()
 
         if data is None:
+            # height, depth, width
+            # z, y, x
             data = self._test_volume()
         elif isinstance(data, tuple):
             assert len(data) == 3
@@ -35,7 +37,7 @@ class ChemicalConcentrationVolumeVisual(RenderedCudaObjectNode):
                                 network_shape[2]/(self._obj._vol_shape[0]))
         self.transform.move((.5 * self.transform.scale[0],
                              .5 * self.transform.scale[1],
-                             .5 * self.transform.scale[2]))
+                             .5 * self.transform.scale[2] + 1.1))
         self.additive = 100
         self.freeze()
 
@@ -49,7 +51,7 @@ class ChemicalConcentrationVolumeVisual(RenderedCudaObjectNode):
         self._gpu_array = RegisteredTexture3D(
             buffer, self._obj._vol_shape, self._cuda_device, cpu_data=self._obj._last_data)
 
-    def toogle_visible(self):
+    def toggle_visible(self):
         self.visible = not self.visible
 
     @staticmethod

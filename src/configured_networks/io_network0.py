@@ -10,61 +10,11 @@ from network import (
 from network.gpu.visualized_elements import GroupFiringCountsPlot
 from engine import EngineConfig, Engine
 from network.gpu.simulation import NetworkSimulationGPU
-from network.gpu.neurons import NeuronRepresentation
-from network.gpu.synapses import SynapseRepresentation
+# from network.gpu.neurons import NeuronRepresentation
+# from network.gpu.synapses import SynapseRepresentation
 
 
 class IOSnn0GPU(NetworkSimulationGPU):
-
-    def __init__(self,
-                 engine,
-                 config: NetworkConfig,
-                 device: int,
-                 T: int,
-                 neurons: NeuronRepresentation,
-                 synapses: SynapseRepresentation,
-                 plotting_config: PlottingConfig,
-                 group_firing_counts_plot_single1: GroupFiringCountsPlot
-                 ):
-
-        super().__init__(
-            engine=engine,
-            config=config,
-            neurons=neurons,
-            synapses=synapses,
-            device=device, T=T,
-            plotting_config=plotting_config,
-            group_firing_counts_plot_single1=group_firing_counts_plot_single1)
-
-        n0 = self.neurons.G_neuron_typed_ccount[67]
-
-        self.neurons.N_flags.model[n0 + 2] = 1
-        self.neurons.N_flags.model[n0 + 3] = 1
-        self.neurons.N_flags.model[n0 + 4] = 1
-        self.neurons.N_flags.model[n0 + 5] = 1
-
-        self.synapse_arrays.N_rep[0, n0] = n0 + 2
-        self.synapse_arrays.N_rep[0, n0 + 1] = n0 + 3
-        self.synapse_arrays.N_rep[1, n0] = n0 + 4
-        self.synapse_arrays.N_rep[1, n0 + 1] = n0 + 5
-
-        self.synapse_arrays.make_sensory_groups(
-            G_neuron_counts=self.neurons.G_neuron_counts,
-            N_pos=self.neurons._neuron_visual.gpu_array,
-            G_pos=self.neurons.G_pos,
-            groups=self._config.sensory_groups,
-            grid=self._config.grid)
-
-        self.neurons.N_states.izhikevich_neurons.use_preset(
-            'RS', self.neurons.N_flags.select_by_groups(self._config.sensory_groups))
-
-        if self._config.N >= 8000:
-            self.synapse_arrays.swap_group_synapses(
-                groups=torch.from_numpy(self._config.grid.forward_groups).to(device=self.device).type(torch.int64))
-
-        self.Simulation.set_stdp_config(0)
-
-        self._post_synapse_mod_init(self.neurons.data_shapes)
 
     def update(self):
 
@@ -160,16 +110,38 @@ class IOSnn0(SpikingNeuralNetwork):
 
         engine.set_main_context_as_current()
 
-        self.simulation_gpu = IOSnn0GPU(
-            engine=engine,
-            config=self.network_config,
-            neurons=self.neurons,
-            synapses=self.synapse_arrays,
-            device=device,
-            T=self.T,
-            plotting_config=self.plotting_config,
-            group_firing_counts_plot_single1=self.group_firing_counts_plot_single1
-        )
+        self.simulation_gpu = IOSnn0GPU.from_snn(self, engine=engine, device=device)
+
+        n0 = self.neurons.G_neuron_typed_ccount[67]
+
+        self.neurons.N_flags.model[n0 + 2] = 1
+        self.neurons.N_flags.model[n0 + 3] = 1
+        self.neurons.N_flags.model[n0 + 4] = 1
+        self.neurons.N_flags.model[n0 + 5] = 1
+
+        self.synapse_arrays.N_rep[0, n0] = n0 + 2
+        self.synapse_arrays.N_rep[0, n0 + 1] = n0 + 3
+        self.synapse_arrays.N_rep[1, n0] = n0 + 4
+        self.synapse_arrays.N_rep[1, n0 + 1] = n0 + 5
+
+        self.synapse_arrays.make_sensory_groups(
+            G_neuron_counts=self.neurons.G_neuron_counts,
+            N_pos=self.neurons._neuron_visual.gpu_array,
+            G_pos=self.neurons.G_pos,
+            groups=self.network_config.sensory_groups,
+            grid=self.network_config.grid)
+
+        self.neurons.N_states.izhikevich_neurons.use_preset(
+            'RS', self.neurons.N_flags.select_by_groups(self.network_config.sensory_groups))
+
+        if self.network_config.N >= 8000:
+            self.synapse_arrays.swap_group_synapses(
+                groups=torch.from_numpy(self.simulation_gpu._config.grid.forward_groups).to(
+                    device=self.simulation_gpu.device).type(torch.int64))
+
+        self.simulation_gpu.Simulation.set_stdp_config(0)
+
+        self.simulation_gpu._post_synapse_mod_init()
 
         self.registered_buffers += self.simulation_gpu.registered_buffers
 

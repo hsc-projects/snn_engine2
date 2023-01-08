@@ -128,6 +128,8 @@ class RegisteredGPUArray:
         self._id = id_
 
         self.tensor: Optional[torch.Tensor] = None
+        # noinspection PyUnresolvedReferences
+        self._numba_device_array: Optional[numba.cuda.cudadrv.devicearray.DeviceNDArray] = None
 
     @property
     def ctype_ptr(self):
@@ -200,6 +202,9 @@ class RegisteredGPUArray:
         # noinspection PyArgumentList
         self.reg.unregister()
 
+    def copy_to_host(self):
+        return self._numba_device_array.copy_to_host()
+
 
 class RegisteredVBO(RegisteredGPUArray):
 
@@ -221,8 +226,26 @@ class RegisteredVBO(RegisteredGPUArray):
 
         self.tensor = torch.as_tensor(self._numba_device_array, device=self.conf.device)
 
-    def copy_to_host(self):
-        return self._numba_device_array.copy_to_host()
+
+class RegisteredIBO(RegisteredGPUArray):
+
+    def __init__(self, buffer, shape, device):
+        stride = shape[1]
+        nbytes_int32 = 4
+
+        config = GPUArrayConfig(shape=shape, strides=(stride * nbytes_int32, nbytes_int32),
+                                dtype=np.int32, device=device)
+        RegisteredGPUArray.__init__(self, config=config, **self._read_buffer(buffer))
+
+        # noinspection PyUnresolvedReferences
+        self._numba_device_array = numba.cuda.cudadrv.devicearray.DeviceNDArray(
+            shape=self.conf.shape,
+            strides=self.conf.strides,
+            dtype=self.conf.dtype,
+            stream=self.conf.stream,
+            gpu_data=self.gpu_data)
+
+        self.tensor = torch.as_tensor(self._numba_device_array, device=self.conf.device)
 
 
 class RegisteredTexture3D(RegisteredGPUArray):

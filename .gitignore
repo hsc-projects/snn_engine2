@@ -186,9 +186,9 @@ dmypy.json
 cython_debug/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,c++,cuda
-/inc/pycuda/
-/inc/vispy/
+/inc/pycuda/*
+/inc/vispy/*
+/inc/pybind11/*
 /src/rendering/memcpy3d_test.py
 /src/rendering/surface2d.py
 /src/rendering/texture3d_.py
-/inc/pybind11/

@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from typing import Optional
+from typing import Optional, Union
 
 # from network.gpu.plotting import PlottingGPUArrays
 from network.network_config import NetworkConfig, PlottingConfig
@@ -14,8 +14,10 @@ from network.gpu.cpp_cuda_backend import (
 )
 from network.gpu.neurons import NeuronRepresentation
 from network.gpu.synapses import SynapseRepresentation
-from network.gpu.chemicals import ChemicalRepresentation
+# from network.gpu.chemicals import ChemicalRepresentation
+from network.chemical_config import ChemicalConfigCollection, DefaultChemicals
 from rendering import GPUArrayCollection
+# from network.spiking_neural_network import SpikingNeuralNetwork
 
 
 # noinspection PyPep8Naming
@@ -30,7 +32,7 @@ class NetworkSimulationGPU(GPUArrayCollection):
                  synapses: SynapseRepresentation,
                  plotting_config: PlottingConfig,
                  group_firing_counts_plot_single1: GroupFiringCountsPlot,
-                 chemicals: Optional[ChemicalRepresentation] = None
+                 chemical_concentrations: Union[ChemicalConfigCollection, DefaultChemicals]
                  ):
         super().__init__(device=device, bprint_allocated_memory=config.N > 1000)
 
@@ -72,6 +74,8 @@ class NetworkSimulationGPU(GPUArrayCollection):
         self.G_firing_count_hist = self.izeros((self._plotting_config.scatter_plot_length, self._config.G))
 
         self.lookup_output_tensor = self.fzeros(6)
+
+        self.chemical_concentrations = chemical_concentrations
 
         self.Simulation = snn_simulation_gpu.SnnSimulation(
             N=self._config.N,
@@ -116,7 +120,15 @@ class NetworkSimulationGPU(GPUArrayCollection):
             G_syn_count_exc=self.neurons.g2g_info_arrays.G_syn_count_exc.data_ptr(),
             L_winner_take_all_map=self.synapse_arrays.L_winner_take_all_map.data_ptr(),
             max_n_winner_take_all_layers=self._config.max_n_winner_take_all_layers,
-            max_winner_take_all_layer_size=self._config.max_winner_take_all_layer_size
+            max_winner_take_all_layer_size=self._config.max_winner_take_all_layer_size,
+            C_old=self.chemical_concentrations.C_old.data_ptr(),
+            C_new=self.chemical_concentrations.C_new.data_ptr(),
+            C_source=self.chemical_concentrations.C_source.data_ptr(),
+            chem_grid_w=self.chemical_concentrations.width,
+            chem_grid_h=self.chemical_concentrations.height,
+            chem_grid_d=self.chemical_concentrations.depth,
+            chem_k_val=self.chemical_concentrations.k_val,
+            chem_depreciation=self.chemical_concentrations.depreciation
         )
 
         self.group_info_mesh = GroupInfo(
@@ -132,7 +144,21 @@ class NetworkSimulationGPU(GPUArrayCollection):
 
         engine.set_main_context_as_current()
 
-    def _post_synapse_mod_init(self, shapes):
+    @classmethod
+    def from_snn(cls, network, engine, device):
+        return cls(engine=engine,
+                   config=network.network_config,
+                   device=device,
+                   T=network.T,
+                   neurons=network.neurons,
+                   synapses=network.synapse_arrays,
+                   plotting_config=network.plotting_config,
+                   group_firing_counts_plot_single1=network.group_firing_counts_plot_single1,
+                   chemical_concentrations=network.chemical_concentrations)
+
+    def _post_synapse_mod_init(self, shapes=None):
+        if shapes is None:
+            shapes = self.neurons.data_shapes
         self.synapse_arrays.actualize_N_rep_pre_synaptic_idx(shapes=shapes)
         self.synapse_arrays.N_rep_buffer = self.synapse_arrays.N_rep_buffer.reshape(shapes.N_rep)
         self.Simulation.calculate_avg_group_weight()
@@ -190,3 +216,5 @@ class NetworkSimulationGPU(GPUArrayCollection):
     def update(self):
         for i in range(self._config.sim_updates_per_frame):
             self.Simulation.update(self._config.stdp_active, False)
+            if self.Simulation.bupdate_chemical_contrations is True:
+                self.chemical_concentrations.update_visuals()

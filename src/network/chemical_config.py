@@ -1,6 +1,6 @@
 from dataclasses import dataclass, asdict, field
 from typing import Optional, List
-from network.gpu.chemicals import ChemicalRepresentation
+from network.gpu.chemicals import ChemicalConcentrations
 from network.gpu.visualized_elements.chemical_concentration_volume_visual import ChemicalConcentrationVolumeVisual
 
 
@@ -10,10 +10,12 @@ class ChemicalConfig:
     color: Optional[str] = None
     effect: Optional[str] = None
     visual: Optional[ChemicalConcentrationVolumeVisual] = None
+    k_val: float = 0.15
+    depreciation: float = 0.05
 
 
 @dataclass
-class ChemicalConfigCollection(ChemicalRepresentation):
+class ChemicalConfigCollection(ChemicalConcentrations):
 
     _elements: Optional[List] = field(init=False, repr=False)
 
@@ -61,4 +63,4 @@ class ChemicalConfigCollection(ChemicalRepresentation):
 class DefaultChemicals(ChemicalConfigCollection):
 
     C1: ChemicalConfig = ChemicalConfig()
-    C2: ChemicalConfig = ChemicalConfig()
+    # C2: ChemicalConfig = ChemicalConfig()

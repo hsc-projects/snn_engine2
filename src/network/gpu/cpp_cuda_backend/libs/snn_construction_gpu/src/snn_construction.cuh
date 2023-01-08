@@ -37,16 +37,6 @@ void fill_G_exp_ccsyn_per_src_type_and_delay(
 );
 
 
-// void fill_N_rep(
-//     int N,
-//     int S,
-//     int D,
-//     int G,
-//     const float* G_conn_probs,
-//     const int* G_exp_ccsyn_per_src_type_and_delay,
-// 	bool verbose = 0
-// );
-
 void fill_N_rep(
 	int N,
 	int S,

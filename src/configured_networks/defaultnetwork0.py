@@ -5,36 +5,31 @@ from network import (
     PlottingConfig,
     SpikingNeuralNetwork,
 )
-from network.gpu.visualized_elements import (
-    GroupFiringCountsPlot,
-)
-from network.gpu.neurons import NeuronRepresentation
-from network.gpu.synapses import SynapseRepresentation
 from engine import EngineConfig, Engine
-from network.gpu.simulation import NetworkSimulationGPU
-from network.network_config import NetworkInitValues
+from network.network_config import NetworkInitValues, DefaultChemicals
+from utils import boxed_string
 
 
-class RateNetwork0(SpikingNeuralNetwork):
+class DefaultNetwork0(SpikingNeuralNetwork):
 
     def __init__(self, config, engine):
         super().__init__(config, engine)
 
     # noinspection PyPep8Naming
-    def initialize_GPU_arrays(self, device, engine: Engine, **kwargs):
-        super().initialize_GPU_arrays(device, engine)
-
-        self.simulation_gpu = NetworkSimulationGPU.from_snn(self, engine, device)
-        self.simulation_gpu._post_synapse_mod_init()
-        self.registered_buffers += self.simulation_gpu.registered_buffers
-
-        # self.synapse_arrays.visualized_synapses.add_synapse_visual(0)
+    def initialize_GPU_arrays(self, device, engine: Engine, init_default_sim=True,
+                              init_default_sim_with_syn_post_init=True, **kwargs):
+        super().initialize_GPU_arrays(device, engine,
+                                      init_default_sim=init_default_sim,
+                                      init_default_sim_with_syn_post_init=init_default_sim_with_syn_post_init)
 
     def unregister_registered_buffers(self):
         super().unregister_registered_buffers()
 
 
-class RateNetwork0Config(EngineConfig):
+class DefaultNetwork0Config(EngineConfig):
+
+    network_class = DefaultNetwork0
+    print('\n', boxed_string(DefaultNetwork0.__name__, inbox_h_margin=20))
 
     class InitValues(NetworkInitValues):
 
@@ -56,7 +51,8 @@ class RateNetwork0Config(EngineConfig):
                             N_pos_shape=(4, 4, 1),
                             sim_updates_per_frame=1,
                             stdp_active=True,
-                            debug=False, InitValues=InitValues())
+                            debug=False, InitValues=InitValues(),
+                            chemical_configs=DefaultChemicals())
 
     plotting = PlottingConfig(n_voltage_plots=10,
                               voltage_plot_length=200,
@@ -64,12 +60,11 @@ class RateNetwork0Config(EngineConfig):
                               scatter_plot_length=200,
                               has_voltage_multiplot=True,
                               has_firing_scatterplot=True,
-                              has_group_firings_multiplot=True,
-                              has_group_firings_plot0=True,
-                              has_group_firings_plot1=True,
+                              has_group_firings_multiplot=False,
+                              has_group_firings_plot0=False,
+                              has_group_firings_plot1=False,
                               windowed_multi_neuron_plots=False,
-                              windowed_neuron_interfaces=True,
+                              windowed_neuron_interfaces=False,
                               group_info_view_mode='split',
                               network_config=network)
 
-    network_class = RateNetwork0

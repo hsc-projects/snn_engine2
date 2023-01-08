@@ -52,6 +52,26 @@ LaunchParameters::LaunchParameters(const int n_threads_x, void*init_func, const 
 	grid3 = dim3(grid_size);
 }
 
+LaunchParameters::LaunchParameters(
+	const int grid_width, 
+	const int grid_height, 
+	const int grid_depth, 
+	const int blockdim_width,
+	const int blockdim_height,
+	const int blockdim_depth)
+{
+	// func = init_func;
+	// init_sizes(n_threads_x, init_func, dynamicSMemSize, blockSizeLimit);
+
+	block3 = dim3(blockdim_width, blockdim_height, blockdim_depth);
+	
+	grid3  = dim3((int)std::ceil((grid_width  + blockdim_width  - 1) / blockdim_width),
+			 	  (int)std::ceil((grid_height + blockdim_height - 1) / blockdim_height),
+			 	  (int)std::ceil((grid_depth  + blockdim_depth  - 1) / blockdim_depth));
+
+	std::cout << "\n" << grid3.x << "\n" << grid3.y << "\n" << grid3.z;
+}
+
 void LaunchParameters::init_sizes(const int n_threads_x, void* init_func, const int dynamicSMemSize, const int blockSizeLimit)
 {
 	// initialize grid_size and block_size

@@ -1,4 +1,5 @@
 #include <simulation/snn_simulation.cuh>
+//#define BLOCK_SIZE 8
 
 
 __global__ void update_N_state_(
@@ -190,6 +191,99 @@ __global__ void update_scatter_plot_(
 }
 
 
+__global__ void update_chemical_contrations_(
+	float *C_old, float *C_new, const float *C_source, 
+	int grid_w, int grid_h, int grid_d, 
+	float k_val = 0.75f, 
+	float depreciation = 0.1f) 
+{
+	
+	// original source: https://github.com/AdityaNair111/2D-3D-Heat-Flow-CUDA/blob/master/src/heat2D3D.cu
+	//
+	// C_new = C_old + sum[n in neighbors] k_val * (T_n - C_old) or C_source - depreciation
+	
+ 
+	const int chem_block_size = 8;
+	__shared__ float Mat[chem_block_size + 2][chem_block_size + 2][chem_block_size + 2];
+	
+	const int j = blockIdx.x * chem_block_size + threadIdx.x; // witdth 
+	const int i = blockIdx.y * chem_block_size + threadIdx.y; // height 
+	const int k = blockIdx.z * chem_block_size + threadIdx.z; // depth
+
+
+	if ((i <= grid_h) && (j <= grid_w) && (k <= grid_d))
+	{
+		const int grid_wd = grid_w * grid_d;
+		const int idx = i * grid_wd + j * grid_d + k;
+
+		const int j_mat = threadIdx.x + 1;
+		const int i_mat = threadIdx.y + 1;
+		const int k_mat = threadIdx.z + 1;
+		
+		
+		
+		// length <= BLOCK_SIZE 
+		const int length_j = (blockIdx.x == (int)(grid_w / chem_block_size)) ? (grid_w % chem_block_size) : chem_block_size;
+		const int length_i = (blockIdx.y == (int)(grid_h / chem_block_size)) ? (grid_h % chem_block_size) : chem_block_size;
+		const int length_k = (blockIdx.z == (int)(grid_d / chem_block_size)) ? (grid_d % chem_block_size) : chem_block_size;
+		
+		const float c_old = C_old[idx];
+
+		Mat[i_mat][j_mat][k_mat] = c_old;  // fill Mat[1: BLOCK_SIZE + 2][1: BLOCK_SIZE + 2][1: BLOCK_SIZE + 2] with C_old[i, j, k]
+
+		if (j_mat == 1)  // sum_block_border
+		{
+			// Mat[][0 or block-end][] "outside" C_old => fill Mat[][0 or block-end][] with C_old[, . +/- 1, ] (or else C_old[, .,]).
+			Mat[i_mat][0           ][k_mat] = (j == 0)                 ? c_old                                : C_old[idx - grid_d];  /// check j or j-1
+			Mat[i_mat][length_j + 1][k_mat] = (j >= grid_w - length_j) ? C_old[idx + (length_j - 1) * grid_d] : C_old[idx + length_j * grid_d];
+		}
+
+		if (i_mat == 1)
+		{
+			Mat[0           ][j_mat][k_mat] = (i == 0)                 ? c_old      							       : C_old[idx - grid_wd];  /// check j or j-1
+			Mat[1 + length_i][j_mat][k_mat] = (i >= grid_h - length_i) ? C_old[idx + (length_i - 1) * grid_wd] : C_old[idx + length_i * grid_wd];	
+		}
+		
+		if (k_mat == 1)
+		{
+			Mat[i_mat][j_mat][0           ] = (k < 1)                  ? c_old      			   : C_old[idx - 1];  /// check j or j-1
+			Mat[i_mat][j_mat][1 + length_k] = (k >= grid_d - length_k) ? C_old[idx + length_k - 1] : C_old[idx + length_k];	
+		}
+		
+		__syncthreads();
+		
+		if ((i < grid_h) && (j < grid_w) && (k < grid_d))
+		{
+			
+			//const float t_source = C_source[idx];
+			float c_new = C_source[idx];
+
+			if (!(c_new > 0.f)){
+				float sum_mat = (
+					Mat[i_mat + 1][j_mat	  ][k_mat    ] 
+					+ Mat[i_mat - 1][j_mat	  ][k_mat    ] 
+					+ Mat[i_mat    ][j_mat + 1][k_mat    ] 
+					+ Mat[i_mat    ][j_mat - 1][k_mat    ] 
+					+ Mat[i_mat	   ][j_mat 	  ][k_mat - 1]
+					+ Mat[i_mat	   ][j_mat	  ][k_mat + 1]
+				);
+
+				c_new = (fminf(2000.0f, fmaxf(0.0f, c_old + k_val * (sum_mat - 6 * c_old) - depreciation)));
+
+				// if (c_old > 1500){
+				// 	int max_ = fmaxf(0.0f, + k_val * (sum_mat - 6 * c_old) - depreciation);
+				// 	printf("\n %.2f = %.2f + %.2f * (%.2f - %.2f) - %.2f; max = %.2f, min = %.2f  ", 
+				// 		   c_new, c_old, k_val, sum_mat, 6 * c_old, depreciation, max_, fminf(2000.0f, max_));
+				// }
+			}
+			C_new[idx] = c_new;
+			C_old[idx] = c_new;
+
+		}
+	}
+}
+
+
 SnnSimulation::SnnSimulation(
     const int N_,
     const int G_,
@@ -236,7 +330,16 @@ SnnSimulation::SnnSimulation(
 
 	int* L_winner_take_all_map_,
     int max_n_winner_take_all_layers_,
-    int max_winner_take_all_layer_size_
+    int max_winner_take_all_layer_size_,
+
+	float* C_old_,
+	float* C_new_, 
+	float* C_source_, 
+	int chem_grid_w_,
+	int chem_grid_h_,
+	int chem_grid_d_,
+	float chem_k_val_, 
+	float chem_depreciation_
 ){
     
 	N = N_;
@@ -332,7 +435,38 @@ SnnSimulation::SnnSimulation(
 
     max_n_winner_take_all_layers = max_n_winner_take_all_layers_;
     max_winner_take_all_layer_size = max_winner_take_all_layer_size_;
+
+	C_old = C_old_;
+	C_new = C_new_;
+	C_source = C_source_;
+	chem_grid_w = chem_grid_w_;
+	chem_grid_h = chem_grid_h_;
+	chem_grid_d = chem_grid_d_;
+	if (chem_grid_w * chem_grid_h * chem_grid_d > 0){
+		b_update_chemical_contrations = true;
+	}
+	chem_k_val = chem_k_val_;
+	chem_depreciation = chem_depreciation_;
+	lp_update_chemical_contrations = LaunchParameters(
+		chem_grid_w, 
+		chem_grid_h,
+		chem_grid_d,
+		chem_block_size,
+		chem_block_size,
+		chem_block_size
+	);
 	
+}
+
+
+void SnnSimulation::update_chemical_contrations(){
+	update_chemical_contrations_ KERNEL_ARGS2(lp_update_chemical_contrations.grid3, 
+											  lp_update_chemical_contrations.block3) (
+		C_old, C_new, C_source,
+		chem_grid_w, chem_grid_h, chem_grid_d,
+		chem_k_val,
+		chem_depreciation
+	);
 }
 
 
@@ -548,8 +682,6 @@ void SnnSimulation::update_plots()
 		voltage_plot_map,
 		N_states,
 		voltage_plot_data,
-		// voltage_plot_info.h_M[0],
-		// voltage_plot_info.h_M[2],
 		voltage_plot_length,
 		t % voltage_plot_length,
 		N,
@@ -561,26 +693,12 @@ void SnnSimulation::update_plots()
 		scatter_plot_map,
 		fired,
 		scatter_plot_data,
-		// voltage_plot_info.h_M[0],
-		// voltage_plot_info.h_M[2],
 		scatter_plot_length,
 		t % scatter_plot_length,
 		N,
 		n_scatter_plots
 	);
 
-	// k_update_scatter_plot_data KERNEL_ARGS2(l_update_scatter_plot_data.grid3,
-	// 								        l_update_scatter_plot_data.block3) (
-	// 	firing_plot_map.get_dp(),
-	// 	fired.get_dp(),
-	// 	renderer->firing_plot.ebo_data.d,
-	// 	firing_plot_info.h_M[0],
-	// 	firing_plot_info.h_M[2],
-	// 	renderer->firing_plot.plot_length,
-	// 	t % renderer->firing_plot.plot_length,
-	// 	N,
-	// 	renderer->firing_plot.restart_index_
-	// );
 }
 
 // void print_array()
@@ -809,6 +927,10 @@ void SnnSimulation::update(const bool b_stdp, const bool verbose)
 	// 	printf("\n");
 	// }
 
+	if (b_update_chemical_contrations){
+		update_chemical_contrations();
+	}
+
 	update_duration = std::chrono::duration_cast<std::chrono::milliseconds>(
 		std::chrono::steady_clock::now() - t0).count();
 }
@@ -976,3 +1098,13 @@ void SnnSimulation::calculate_avg_group_weight(){
 	checkCudaErrors(cudaDeviceSynchronize());
 
 }
+
+void SnnSimulation::set_b_update_chemical_contrations(const bool b_update_chemical_contrations_) {
+	if (!b_update_chemical_contrations_){
+		b_update_chemical_contrations = b_update_chemical_contrations_;
+	}
+	else if (chem_grid_w * chem_grid_h * chem_grid_d > 0){
+		b_update_chemical_contrations = b_update_chemical_contrations_; 
+	} 
+}
+bool SnnSimulation::get_b_update_chemical_contrations() { return b_update_chemical_contrations; }

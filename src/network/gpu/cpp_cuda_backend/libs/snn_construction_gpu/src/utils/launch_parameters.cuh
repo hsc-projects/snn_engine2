@@ -28,6 +28,16 @@ struct LaunchParameters
 		int dynamicSMemSize = 0,
 		int blockSizeLimit = 0
 	);
+
+	LaunchParameters(
+		int grid_width, 
+		int grid_height, 
+		int grid_depth, 
+		int blockdim_width,
+		int blockdim_height,
+		int blockdim_depth
+	);
+
 	void init_sizes(
 		int n_threads_x, 
 		void* init_func,
