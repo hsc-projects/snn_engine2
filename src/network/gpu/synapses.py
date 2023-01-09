@@ -10,7 +10,6 @@ from network.gpu.visualized_elements.synapse_visuals import VisualizedSynapsesCo
 # noinspection PyUnresolvedReferences
 from network.gpu.cpp_cuda_backend import (
     snn_construction_gpu,
-    snn_construction2_gpu,
     snn_simulation_gpu
 )
 from network.gpu.neurons import NeuronRepresentation
@@ -49,7 +48,7 @@ class SynapseRepresentation(GPUArrayCollection):
         self.L_winner_take_all_map[self.neurons._config.max_winner_take_all_layer_size, :] = 0
         self.n_wta_layers = 0
 
-        self.RepBackend = snn_construction2_gpu.SnnRepresentation(
+        self.RepBackend = snn_construction_gpu.SnnRepresentation(
             N=self.neurons._config.N,
             G=self.neurons._config.G,
             S=self.neurons._config.S,

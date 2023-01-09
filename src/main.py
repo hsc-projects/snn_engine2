@@ -10,8 +10,8 @@ from configured_networks.defaultnetwork0 import DefaultNetwork0Config
 
 # high priority
 
-# TODO: simulate chemical diffusion
-# TODO: in-engine configuration/construction
+# TODO: diffusion grid calculation
+# TODO: in-engine network - configuration/construction
 
 # medium priority
 

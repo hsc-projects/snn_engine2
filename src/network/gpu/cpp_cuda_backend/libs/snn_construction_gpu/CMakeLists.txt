@@ -41,19 +41,6 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -Xcompiler -fPIC)
 set(CUDA_SEPARABLE_COMPILATION ON)
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-# set(CUDA_NVCC_FLAGS "-rdc=true")
-
-# set(PROJECT_LINK_LIBS  -lcudadevrt)
-
-cuda_add_library(
-    snn_construction_gpu SHARED
-    ./src/bindings.cu 
-    ./src/snn_construction.cu
-    ./src/example/snn_engine_gpu.cu
-    ./src/utils/launch_parameters.cu
-    ./src/utils/curand_states.cu
-)
-
 cuda_add_library(
     snn_simulation_gpu SHARED
     ./src/simulation/snn_simulation_bindings.cu
@@ -63,21 +50,11 @@ cuda_add_library(
 )
 
 cuda_add_library(
-    snn_construction2_gpu SHARED
+    snn_construction_gpu SHARED
     ./src/construction/snn_construction_bindings.cu
     ./src/construction/snn_representation.cu
     ./src/utils/launch_parameters.cu
     ./src/utils/curand_states.cu
-)
-
-# target_link_libraries(
-#     snn_simulation_gpu
-#     ${CUDA_cudadevrt_LIBRARY}
-# )
-
-target_link_libraries(
-    snn_construction_gpu
-    ${CUDA_cusparse_LIBRARY}
 )
 
 target_link_libraries(
@@ -86,16 +63,14 @@ target_link_libraries(
 )
 
 target_link_libraries(
-    snn_construction2_gpu
+    snn_construction_gpu
     ${CUDA_cusparse_LIBRARY}
 )
 
-set_target_properties(snn_construction_gpu PROPERTIES PREFIX "")
 set_target_properties(snn_simulation_gpu PROPERTIES PREFIX "")
-set_target_properties(snn_construction2_gpu PROPERTIES PREFIX "")
+set_target_properties(snn_construction_gpu PROPERTIES PREFIX "")
 
 IF (WIN32)
-    set_target_properties(snn_construction_gpu PROPERTIES SUFFIX ".pyd")
     set_target_properties(snn_simulation_gpu PROPERTIES SUFFIX ".pyd")
-    set_target_properties(snn_construction2_gpu PROPERTIES SUFFIX ".pyd")
+    set_target_properties(snn_construction_gpu PROPERTIES SUFFIX ".pyd")
 ENDIF()
