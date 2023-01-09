@@ -2,22 +2,67 @@
 
 Interactive simulation and visualisation of spatially extended spiking neural networks on the GPU.
 
+Goals:
+- Build "pheromonal (spiking) neural networks" (see concepts bellow).
+- Interactive Research/Deep Learning visualizations (similarly to here: [Neural Network 3D Simulation by Denis Dmitriev (youtube)](https://www.youtube.com/watch?v=3JQ3hYko51Y))
+
+- Long-term:
+  - Proper docs, optimizations, tests, packaging, containerizing, ...
+  - Lego-like network building
+  - Exports for Blender / more advanced rendering
+  - Compatibility with existing artificial (spiking) neural network libraries
+  - Compatibility with FGPAs, neuromorphic hardware
+  - More flexible GUI.
+  - Integration in a Gaming Engine (current favorite: Unreal)
+
+
 
 ![sim_main](./docs_src/readme_images/simulator_main.png)
-
-
+*Main window. Vertical frames from left to right: 
+collapsible control and object creation elements, 
+main scene with a view of the network, 
+(optional) second scene displaying information for location based groups,
+second panel with collapsible GUI elements.*
 
 ![sim_main](./docs_src/readme_images/simulator_single_neuron_control.png)
-
+*(Optional) window allowing for the tuning of model variables, 
+the control of input current and containing plots for single neurons.
+If not windowed, the panels are integrated in the left panel of the main window.* 
 
 ![sim_main](./docs_src/readme_images/simulator_multiplots.png)
+*(Optional) window for voltage and firing plots of multiple neurons.
+The plot data is updated by CUDA kernels.*
+
+## Technical
+
+* (Python/CUDA/OpenGL)-Interoperability: [PyCUDA](https://documen.tician.de/pycuda/) + [Numba](https://numba.pydata.org/) + [PyTorch](https://pytorch.org/) + [Vispy](https://vispy.org/) ([example]()).
+* GUI/App/Graphics: [Vispy](https://vispy.org/) [[PyQt6](https://www.riverbankcomputing.com/static/Docs/PyQt6/)].
+* (Python/C++)-Interoperability: [pybind11](https://pybind11.readthedocs.io/en/stable/).
+* Data Handling: [Numpy](https://numpy.org/), [PyTorch](https://pytorch.org/), [Pandas](https://pandas.pydata.org/).
+
+## History
+
+After using 2D Ant Colony Optimization in a [simple game](TODO:upload) built for a Game Theory course project  
+and seeing [Neural Network 3D Simulation by Denis Dmitriev (youtube)](https://www.youtube.com/watch?v=3JQ3hYko51Y),
+I started to try to construct visualized spatial spiking network simulations. 
+
+This project started in 2019. Prior versions:
+- 2019: [snn_engine0](https://github.com/hsc-projects/snn_engine0) (python, mostly [PyQtGraph](https://www.pyqtgraph.org/) + [Numpy](https://numpy.org/))
+- 2020 to sep-2021: [snn_engine1_cpp](https://github.com/hsc-projects/snn_engine1_cpp) (C++/CUDA incl. OpenGL Interoperability)
+
 
 # Pheromonal Spatial Neural Networks
 
+## (Concept for a Formal/Minimalistic Formulation) "Pheromonal less-traveled Pathfinding in spatial Networks"
+**Disclaimer:** _This is a pure toy-idea and (besides elementary concepts) not based on research known to me._
+
+**Goal:**  Minimalistic project combining of spatial (2D) artificial neural networks and [(2D) ACO](https://www.youtube.com/watch?v=emRXBr5JvoY).
+
+
+### Elements
+
 We propose to utilize the volume surrounding a spatially extended network as an information buffer. 
 
-
-## Idea 2: Formal/Minimalistic Formulation / "Pheromonal less-traveled Pathfinding in spatial Networks"
 
 Components:
 
@@ -74,16 +119,28 @@ Pattern Layer Size: $P \approx \frac{N}{ \sqrt{N} }$, dimensions: $\sqrt{P} \tim
 
 ...
 
-![ann0](./docs_src/readme_images/ann_process/ann_1.svg)
+### Loop:
 
-![ann0](./docs_src/readme_images/ann_process/ann_23.svg)
-![ann0](./docs_src/readme_images/ann_process/ann_4.svg)
+![ann0](./docs_src/readme_images/ann_process/ann_1.png)
+![ann0](./docs_src/readme_images/ann_process/ann_23.png)
+![ann0](./docs_src/readme_images/ann_process/ann_4.png)
 
-[//]: # (![ann0]&#40;./docs_src/readme_images/ann_process/ann_5.svg&#41;)
+[//]:  # (![ann0]&#40;./docs_src/readme_images/ann_process/ann_5.svg&#41;)
 
 
 
-## Idea 1: Proposal for an Ant Colony Optimization-like Mechanism for the Association of distant neuronal Assemblies of spatially extended spiking neural Networks
+# (Concept) Proposal for an Ant Colony Optimization-like Mechanism for the Association of distant neuronal Assemblies of spatially extended spiking neural Networks
+
+
+**Disclaimer:** _This is a pure toy-idea and (besides elementary concepts) not based on research known to me._
+
+**Goals:** 
+- Using 3D ACO and spatial spiking neural networks to create a plausible mechanism explaining 
+long-term associativity in neural reservoirs as specified bellow.
+- Longterm: Build a fully autonomous stateful (examples: "awake"/inferencing/"reward-processing", dreaming, "short-term recall", "long-term memorizing") 
+io-network with the ability to autocorrect mistakes by forming new long-term associations. 
+
+### Introduction
 
 By combining the concepts related to neurovascular coupling, STDP modulation via chemical concentrations, 
 the concept of neural concept cell assemblies,
@@ -395,7 +452,7 @@ through processes inherent to **R** and based on energy consumption minimization
 
 
 
-### Sources (incomplete)
+## Sources and Inspirations (incomplete)
 
 
 #### Collective Intelligence
@@ -410,6 +467,30 @@ survey of recent developments_](https://journals.sagepub.com/doi/pdf/10.1177/263
 
 ...
 
+#### Simulation of Spiking Neural Networks with CUDA
+
+Jayram Moorkanikara Nageswaran, Nikil Dutt, Jeffrey L. Krichmar, Alex Nicolau; Alex Veidenbaum,
+[_Efficient simulation of large-scale Spiking Neural Networks using CUDA graphics processors_](https://ieeexplore.ieee.org/document/5179043).
+
+
+#### Deep Learning in Spiking Neural Networks
+
+Amirhossein Tavanaei, Masoud Ghodrati, Saeed Reza Kheradpisheh, Timothee Masquelier, Anthony S. Maida (2018)
+[_Deep Learning in Spiking Neural Networks_](https://arxiv.org/abs/1804.08150).
+Neural Networks (2018).
+
+Alex Vigneron and Jean Martinet (2020)
+[_A critical survey of STDP in Spiking Neural Networks for Pattern Recognition_](https://ieeexplore.ieee.org/document/9207239)
+2020 International Joint Conference on Neural Networks.
+
+...
+
+#### Spatial Spiking Neural Networks
+
+Ryan Pyle and Robert Rosenbaum (2017)
+[_Spatiotemporal Dynamics and Reliable Computations in Recurrent Spiking Neural Networks_](https://www3.nd.edu/%7Errosenb1/Papers/PylePRL17Combined.pdf).
+Physical Review Letters, 2017.
+
 
 #### Neurovascular Coupling
 
@@ -421,26 +502,6 @@ Frontiers in Neuroenergetics. 2010; 2: 5.
 
 
 Cell type specificity of neurovascular coupling in cerebral cortex (2016)
-
-...
-
-#### Spiking Neural Networks
-
-
-Amirhossein Tavanaei, Masoud Ghodrati, Saeed Reza Kheradpisheh, Timothee Masquelier, Anthony S. Maida (2018)
-[Deep Learning in Spiking Neural Networks](https://arxiv.org/abs/1804.08150).
-Neural Networks (2018).
-
-Alex Vigneron and Jean Martinet (2020)
-[_A critical survey of STDP in Spiking Neural Networks for Pattern Recognition_](https://ieeexplore.ieee.org/document/9207239)
-2020 International Joint Conference on Neural Networks.
-
-
-Ryan Pyle and Robert Rosenbaum (2017)
-[Spatiotemporal Dynamics and Reliable Computations in Recurrent Spiking Neural Networks](https://www3.nd.edu/%7Errosenb1/Papers/PylePRL17Combined.pdf).
-Physical Review Letters, 2017.
-
-
 
 ...
 
@@ -460,6 +521,9 @@ eNeuro 7 May 2020, 7 (3) ENEURO.0533-19.2020.
 ...
 
 
+## Dedication
+
+To my family for the given support and endless patience. 
 
 
 
