@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from typing import Optional, Union
+from typing import Union
 
 # from network.gpu.plotting import PlottingGPUArrays
 from network.network_config import NetworkConfig, PlottingConfig
@@ -45,25 +45,31 @@ class NetworkSimulationGPU(GPUArrayCollection):
         self.neurons = neurons
         self.synapse_arrays = synapses
 
-        self._voltage_multiplot = VoltageMultiPlot(
-            scene=engine.voltage_multiplot_scene,
-            view=engine.voltage_multiplot_view,
-            device=device,
-            n_plots=self._plotting_config.n_voltage_plots,
-            plot_length=self._plotting_config.voltage_plot_length,
-            n_group_separator_lines=self.neurons.data_shapes.n_group_separator_lines
-        )
-        self.registered_buffers += self._voltage_multiplot.registered_buffers
+        if plotting_config.has_voltage_multiplot:
+            self._voltage_multiplot = VoltageMultiPlot(
+                scene=engine.voltage_multiplot_scene,
+                view=engine.voltage_multiplot_view,
+                device=device,
+                n_plots=self._plotting_config.n_voltage_plots,
+                plot_length=self._plotting_config.voltage_plot_length,
+                n_group_separator_lines=self.neurons.data_shapes.n_group_separator_lines
+            )
+            self.registered_buffers += self._voltage_multiplot.registered_buffers
+        else:
+            self._voltage_multiplot = None
 
-        self._firing_scatter_plot = FiringScatterPlot(
-            scene=engine.firing_scatter_plot_scene,
-            view=engine.firing_scatter_plot_view,
-            device=device,
-            n_plots=self._plotting_config.n_scatter_plots,
-            plot_length=self._plotting_config.scatter_plot_length,
-            n_group_separator_lines=self.neurons.data_shapes.n_group_separator_lines
-        )
-        self.registered_buffers += self._firing_scatter_plot.registered_buffers
+        if plotting_config.has_firing_scatterplot:
+            self._firing_scatter_plot = FiringScatterPlot(
+                scene=engine.firing_scatter_plot_scene,
+                view=engine.firing_scatter_plot_view,
+                device=device,
+                n_plots=self._plotting_config.n_scatter_plots,
+                plot_length=self._plotting_config.scatter_plot_length,
+                n_group_separator_lines=self.neurons.data_shapes.n_group_separator_lines
+            )
+            self.registered_buffers += self._firing_scatter_plot.registered_buffers
+        else:
+            self._firing_scatter_plot = None
 
         self.Fired = self.fzeros(self._config.N)
         self.last_Fired = self.izeros(self._config.N) - self._config.D

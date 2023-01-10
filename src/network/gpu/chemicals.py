@@ -25,6 +25,7 @@ class ChemicalConcentrations(GPUArrayCollection):
             self.elements: Optional[list[ChemicalConfig]] = None
 
         self.textures3D: list[RegisteredTexture3D] = []
+        self._has_elements = False
 
         for el in self.elements:
             el.visual = ChemicalConcentrationVolumeVisual(None, network_shape,
@@ -32,6 +33,7 @@ class ChemicalConcentrations(GPUArrayCollection):
             self.textures3D.append(el.visual.gpu_array)
 
         if len(self.elements) > 0:
+            self._has_elements = True
             self.C_new = self.textures3D[0].tensor
             # self.C_new[:] = 200
             # self.C_new[:, :, :-2] = 5
@@ -41,13 +43,14 @@ class ChemicalConcentrations(GPUArrayCollection):
 
         self.C_old = torch.clone(self.C_new)
         self.C_source = self.fzeros(shape=self.C_new.shape)
-        self.C_source[:, :, -1] = 2000
-        mask = self.C_new >= self.C_new.max()-200
-        self.C_source[mask] = self.C_new[mask]
+        if self._has_elements is True:
+            self.C_source[:, :, -1] = 2000
+            mask = self.C_new >= self.C_new.max()-200
+            self.C_source[mask] = self.C_new[mask]
 
-        # print(self.C_new[100, 0, 60:70])
-        # print(self.C_new.min(), self.C_new.max())
-        # print(self.C_new.shape)
+            # print(self.C_new[100, 0, 60:70])
+            # print(self.C_new.min(), self.C_new.max())
+            # print(self.C_new.shape)
 
     def update_visuals(self):
         # print(self.C_new[100, 0, 60:70])
@@ -64,10 +67,14 @@ class ChemicalConcentrations(GPUArrayCollection):
 
     @property
     def k_val(self):
+        if self._has_elements is False:
+            return 0.0
         return self.elements[0].k_val
 
     @property
     def depreciation(self):
+        if self._has_elements is False:
+            return 0.0
         return self.elements[0].depreciation
 
     @property

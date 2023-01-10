@@ -99,7 +99,7 @@ class NetworkConfig:
                 self.sim_updates_per_frame = 10
 
         if self.S is None:
-            self.S = int(min(1000, max(np.sqrt(self.N), 2)))
+            self.S = int(min(1000, max(np.sqrt(self.N) + 50, 2)))
         if self.D is None:
             self.D = min(int(max(np.log10(self.N) * (1 + np.sqrt(np.log10(self.N))), 2)), 20)
 

@@ -17,6 +17,9 @@ from network.gpu.simulation import NetworkSimulationGPU
 class IOSnn0GPU(NetworkSimulationGPU):
 
     def update(self):
+        # mask = self.neurons.N_flags.select_by_groups([67])
+        # print(self.neurons.N_states.v[mask])
+        # print(self.neurons.N_states.i_prev[mask])
 
         if self.Simulation.t % 100 == 0:
             print('t =', self.Simulation.t)
@@ -112,24 +115,26 @@ class IOSnn0(SpikingNeuralNetwork):
 
         self.simulation_gpu = IOSnn0GPU.from_snn(self, engine=engine, device=device)
 
-        n0 = self.neurons.G_neuron_typed_ccount[67]
+        # n0 = self.neurons.G_neuron_typed_ccount[67]
 
-        self.neurons.N_flags.model[n0 + 2] = 1
-        self.neurons.N_flags.model[n0 + 3] = 1
-        self.neurons.N_flags.model[n0 + 4] = 1
-        self.neurons.N_flags.model[n0 + 5] = 1
-
-        self.synapse_arrays.N_rep[0, n0] = n0 + 2
-        self.synapse_arrays.N_rep[0, n0 + 1] = n0 + 3
-        self.synapse_arrays.N_rep[1, n0] = n0 + 4
-        self.synapse_arrays.N_rep[1, n0 + 1] = n0 + 5
+        # self.neurons.N_flags.model[n0 + 2] = 1
+        # self.neurons.N_flags.model[n0 + 3] = 1
+        # self.neurons.N_flags.model[n0 + 4] = 1
+        # self.neurons.N_flags.model[n0 + 5] = 1
+        #
+        # self.synapse_arrays.N_rep[0, n0] = n0 + 2
+        # self.synapse_arrays.N_rep[0, n0 + 1] = n0 + 3
+        # self.synapse_arrays.N_rep[1, n0] = n0 + 4
+        # self.synapse_arrays.N_rep[1, n0 + 1] = n0 + 5
 
         self.synapse_arrays.make_sensory_groups(
             G_neuron_counts=self.neurons.G_neuron_counts,
             N_pos=self.neurons._neuron_visual.gpu_array,
             G_pos=self.neurons.G_pos,
             groups=self.network_config.sensory_groups,
-            grid=self.network_config.grid)
+            grid=self.network_config.grid,
+            single_neuron_input=False
+        )
 
         self.neurons.N_states.izhikevich_neurons.use_preset(
             'RS', self.neurons.N_flags.select_by_groups(self.network_config.sensory_groups))
@@ -145,52 +150,11 @@ class IOSnn0(SpikingNeuralNetwork):
 
         self.registered_buffers += self.simulation_gpu.registered_buffers
 
-        # self.CPU = NetworkCPUArrays(self.network_config, self.GPU)
-
         self.add_input_groups(scene=engine.main_window.scene_3d, view=engine.main_window.scene_3d.network_view)
         self.add_output_groups(scene=engine.main_window.scene_3d, view=engine.main_window.scene_3d.network_view)
 
         print('\nactive_sensory_groups:', self.neurons.active_sensory_groups)
         print('active_output_groups:', self.neurons.active_output_groups, '\n')
-        
-    def interface_single_neurons(self, engine: Engine):
-        engine.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self, app=engine, window=engine.main_window,
-            neuron_id=self.neurons.G_neuron_typed_ccount[67].item(), preset='tonic_bursting')
-        engine.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self, app=engine, window=engine.main_window,
-            neuron_id=self.neurons.G_neuron_typed_ccount[67].item() + 1, preset='tonic_bursting')
-        engine.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self, app=engine, window=engine.main_window,
-            neuron_id=self.neurons.G_neuron_typed_ccount[67].item() + 2, preset='low_pass_filter2')
-        engine.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self, app=engine, window=engine.main_window,
-            neuron_id=self.neurons.G_neuron_typed_ccount[67].item() + 3, preset='low_pass_filter2')
-        engine.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self, app=engine, window=engine.main_window,
-            neuron_id=self.neurons.G_neuron_typed_ccount[67].item() + 4, preset='high_pass_filter2')
-        engine.interfaced_neuron_collection.add_interfaced_neuron(
-            network=self, app=engine, window=engine.main_window,
-            neuron_id=self.neurons.G_neuron_typed_ccount[67].item() + 5, preset='high_pass_filter2')
-
-        # engine.interfaced_neuron_collection.sync_signal(0, 1)
-        # engine.interfaced_neuron_collection.sync_signal(2, 3)
-        # engine.interfaced_neuron_collection.sync_model_variables(0, 2)
-        engine.interfaced_neuron_collection.sync_model_variables(2, 3)
-        engine.interfaced_neuron_collection.sync_model_variables(4, 5)
-
-        interfaced_neurons_dct = engine.interfaced_neuron_collection.interfaced_neurons_dct
-
-        interfaced_neurons_dct['Neuron1'].current_control_frame.sliders.amplitude.set_prop_container_value(50)
-        interfaced_neurons_dct['Neuron1'].current_control_frame.sliders.amplitude.actualize_values()
-        interfaced_neurons_dct['Neuron2'].current_control_frame.sliders.amplitude.set_prop_container_value(0)
-        interfaced_neurons_dct['Neuron2'].current_control_frame.sliders.amplitude.actualize_values()
-        interfaced_neurons_dct['Neuron3'].current_control_frame.sliders.amplitude.set_prop_container_value(0)
-        interfaced_neurons_dct['Neuron3'].current_control_frame.sliders.amplitude.actualize_values()
-        interfaced_neurons_dct['Neuron4'].current_control_frame.sliders.amplitude.set_prop_container_value(0)
-        interfaced_neurons_dct['Neuron4'].current_control_frame.sliders.amplitude.actualize_values()
-        interfaced_neurons_dct['Neuron5'].current_control_frame.sliders.amplitude.set_prop_container_value(0)
-        interfaced_neurons_dct['Neuron5'].current_control_frame.sliders.amplitude.actualize_values()
 
     def unregister_registered_buffers(self):
         super().unregister_registered_buffers()
@@ -211,17 +175,17 @@ class IOSnn0Config(EngineConfig):
 
         @dataclass
         class SensoryInput:
-            input_current0: float = 22.3
-            input_current1: float = 42.8
+            input_current0: float = 65.
+            input_current1: float = 25.
 
         @dataclass
         class Weights:
             Inh2Exc: float = -.49
             Exc2Inh: float = .75
             Exc2Exc: float = .75
-            SensorySource: float = 1.5
+            SensorySource: float = .5
 
-    N: int = 2 * 10 ** 5
+    N: int = 1 * 10 ** 4
     T: int = 5000  # Max simulation record duration
 
     device: int = 0
@@ -231,22 +195,22 @@ class IOSnn0Config(EngineConfig):
     network = NetworkConfig(N=N,
                             N_pos_shape=(4, 4, 1),
                             sim_updates_per_frame=1,
-                            stdp_active=True,
+                            stdp_active=False,
                             debug=False, InitValues=InitValues())
 
-    plotting = PlottingConfig(n_voltage_plots=10,
+    plotting = PlottingConfig(n_voltage_plots=100,
                               voltage_plot_length=200,
-                              n_scatter_plots=10,
+                              n_scatter_plots=100,
                               scatter_plot_length=200,
                               has_voltage_multiplot=True,
                               has_firing_scatterplot=True,
                               has_group_firings_multiplot=True,
                               has_group_firings_plot0=True,
                               has_group_firings_plot1=True,
-                              windowed_multi_neuron_plots=False,
-                              windowed_neuron_interfaces=True,
-                              group_info_view_mode='split',
+                              windowed_multi_neuron_plots=True,
+                              windowed_neuron_interfaces=False,
+                              group_info_view_mode='windowed',
                               network_config=network)
 
     network_class = IOSnn0
-    update_single_neuron_plots: bool = True
+    update_single_neuron_plots: bool = False

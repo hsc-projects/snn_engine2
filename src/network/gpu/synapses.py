@@ -489,8 +489,11 @@ class SynapseRepresentation(GPUArrayCollection):
             self,
             G_neuron_counts,
             N_pos, G_pos,
-            groups, grid: NetworkGrid):
+            groups, grid: NetworkGrid,
+            single_neuron_input: bool = False
+    ):
         """
+        (Work in Progress)
         1. Make a sufficient number of sensory neurons: (Izhikevich-Model - tonic Bursting)
         2. Connect each sensory neurons to two unique filter neurons.
         3. Connect the filter neurons to winner takes all neurons.
@@ -500,42 +503,49 @@ class SynapseRepresentation(GPUArrayCollection):
         for group in groups:
             ntype = NeuronTypes.EXCITATORY.value
 
-            n_winner_take_all_neurons = 2
-            n_sensory_neurons = max(int(G_neuron_counts[ntype - 1, :][group]/self.neurons._config.S), 1)
-
             neuron_group_ids_exc = self.neurons.N_flags.select_ids_by_groups([group], ntype=NeuronTypes.EXCITATORY.value)
-            sensory_neuron_ids = neuron_group_ids_exc[:n_sensory_neurons]
 
-            filter_neuron_ids_exc = neuron_group_ids_exc[n_sensory_neurons:-n_winner_take_all_neurons]
-            filter_neuron_ids_inh = self.neurons.N_flags.select_ids_by_groups([group], ntype=NeuronTypes.INHIBITORY.value)
+            if single_neuron_input is True:
+                n_sensory_neurons = max(int(G_neuron_counts[ntype - 1, :][group]/self.neurons._config.S), 1)
+                sensory_neuron_ids = neuron_group_ids_exc[:n_sensory_neurons]
+            else:
+                n_sensory_neurons = None
+                sensory_neuron_ids = neuron_group_ids_exc
 
             self.neurons.N_flags.b_sensory_input[sensory_neuron_ids] = 1
-            ux = grid.unit_shape[0]
-            if n_sensory_neurons > 1:
-                new_x_coords = torch.linspace(G_pos.tensor[group][0] + ux * 0.1,
-                                              G_pos.tensor[group][0] + ux * 0.9,
-                                              steps=n_sensory_neurons, device=self.device)
-            else:
-                new_x_coords = G_pos.tensor[group][0] + ux * 0.5
-            new_y_coords = G_pos.tensor[group][1]
-            new_z_coords = G_pos.tensor[group][2] + (grid.unit_shape[2] / 2)
-            N_pos.tensor[sensory_neuron_ids, 0] = new_x_coords
-            N_pos.tensor[sensory_neuron_ids, 1] = new_y_coords
-            N_pos.tensor[sensory_neuron_ids, 2] = new_z_coords
-            N_pos.tensor[sensory_neuron_ids, 10] = 1
 
-            uy = grid.unit_shape[1]
-            max_y = G_pos.tensor[group][1] + uy
-            # self.N_pos.tensor[filter_neuron_ids_exc, 10] = 1
-            N_pos.tensor[filter_neuron_ids_exc, 1] += .33 * uy * (
-                    (max_y - N_pos.tensor[filter_neuron_ids_exc, 1]) / max_y)
-            N_pos.tensor[filter_neuron_ids_inh, 1] += .33 * uy * (
-                    (max_y - N_pos.tensor[filter_neuron_ids_inh, 1]) / max_y)
+            if single_neuron_input is True:
+                n_winner_take_all_neurons = 2
+                filter_neuron_ids_inh = self.neurons.N_flags.select_ids_by_groups([group], ntype=NeuronTypes.INHIBITORY.value)
+                filter_neuron_ids_exc = neuron_group_ids_exc[n_sensory_neurons:-n_winner_take_all_neurons]
 
-            # print(self.N_rep[:, sensory_neuron_ids[0]])
+                ux = grid.unit_shape[0]
+                if n_sensory_neurons > 1:
+                    new_x_coords = torch.linspace(G_pos.tensor[group][0] + ux * 0.1,
+                                                  G_pos.tensor[group][0] + ux * 0.9,
+                                                  steps=n_sensory_neurons, device=self.device)
+                else:
+                    new_x_coords = G_pos.tensor[group][0] + ux * 0.5
+                new_y_coords = G_pos.tensor[group][1]
+                new_z_coords = G_pos.tensor[group][2] + (grid.unit_shape[2] / 2)
+                N_pos.tensor[sensory_neuron_ids, 0] = new_x_coords
+                N_pos.tensor[sensory_neuron_ids, 1] = new_y_coords
+                N_pos.tensor[sensory_neuron_ids, 2] = new_z_coords
+                N_pos.tensor[sensory_neuron_ids, 10] = 1
+
+                uy = grid.unit_shape[1]
+                max_y = G_pos.tensor[group][1] + uy
+                # self.N_pos.tensor[filter_neuron_ids_exc, 10] = 1
+                N_pos.tensor[filter_neuron_ids_exc, 1] += .33 * uy * (
+                        (max_y - N_pos.tensor[filter_neuron_ids_exc, 1]) / max_y)
+                N_pos.tensor[filter_neuron_ids_inh, 1] += .33 * uy * (
+                        (max_y - N_pos.tensor[filter_neuron_ids_inh, 1]) / max_y)
+
+                # print(self.N_rep[:, sensory_neuron_ids[0]])
 
             self.RepBackend.nullify_all_weights_to_group(group)
             # print(self.N_rep[:, sensory_neuron_ids[0]])
+            return
 
         return
 

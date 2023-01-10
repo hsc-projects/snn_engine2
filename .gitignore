@@ -192,3 +192,5 @@ cython_debug/
 /src/rendering/memcpy3d_test.py
 /src/rendering/surface2d.py
 /src/rendering/texture3d_.py
+/docs_src/animated/
+!/docs_src/animated/heat_diffusion560p.gif

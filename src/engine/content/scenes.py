@@ -76,10 +76,10 @@ class MainSceneCanvas(BaseEngineSceneCanvas):
                 self.grid.add_widget(self.scatter_plot, plot_row1, plot_col0, row_span=row_span10, col_span=col_span0)
 
         if plotting_config.group_info_view_mode.scene is True:
-            if plotting_config.has_group_firings_multiplot:
+            if plotting_config.has_group_firings_multiplot is True:
                 self.group_firings_multiplot = GroupFiringsPlotWidget(plotting_confing=plotting_config)
-            self.grid.add_widget(self.group_firings_multiplot, plot_row1, plot_col1,
-                                 col_span=col_span0, row_span=row_span10)
+                self.grid.add_widget(self.group_firings_multiplot, plot_row1, plot_col1,
+                                     col_span=col_span0, row_span=row_span10)
             self.color_bar = GroupInfoColorBar()
             self.grid.add_widget(self.color_bar, plot_row1, plot_col0 + col_span0, row_span10, 1)
         if plotting_config.has_group_firings_plot0:

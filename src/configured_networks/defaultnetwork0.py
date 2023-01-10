@@ -29,7 +29,7 @@ class DefaultNetwork0(SpikingNeuralNetwork):
 class DefaultNetwork0Config(EngineConfig):
 
     network_class = DefaultNetwork0
-    print('\n', boxed_string(DefaultNetwork0.__name__, inbox_h_margin=20))
+    # print('\n', boxed_string(DefaultNetwork0.__name__, inbox_h_margin=20))
 
     class InitValues(NetworkInitValues):
 
@@ -49,7 +49,7 @@ class DefaultNetwork0Config(EngineConfig):
 
     network = NetworkConfig(N=N,
                             N_pos_shape=(4, 4, 1),
-                            sim_updates_per_frame=1,
+                            sim_updates_per_frame=200,
                             stdp_active=True,
                             debug=False, InitValues=InitValues(),
                             chemical_configs=DefaultChemicals())
@@ -63,8 +63,8 @@ class DefaultNetwork0Config(EngineConfig):
                               has_group_firings_multiplot=False,
                               has_group_firings_plot0=False,
                               has_group_firings_plot1=False,
-                              windowed_multi_neuron_plots=False,
+                              windowed_multi_neuron_plots=True,
                               windowed_neuron_interfaces=False,
-                              group_info_view_mode='split',
+                              group_info_view_mode='windowed',
                               network_config=network)
 

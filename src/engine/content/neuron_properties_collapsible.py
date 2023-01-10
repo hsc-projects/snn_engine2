@@ -157,9 +157,9 @@ class SingleNeuronPlotCollapsible(CollapsibleWidget):
         super().__init__(parent, title=title)
 
         width_min = 200
-        width_max = 1200
-        height_min = 150
-        height_max = 150
+        width_max = 850
+        height_min = 130
+        height_max = 130
         self.canvas = SingleNeuronPlotCanvas(
             conf=CanvasConfig(), app=app, plotting_config=network.plotting_config,
             width_min=width_min, width_max=width_max,

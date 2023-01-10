@@ -10,8 +10,8 @@ class ChemicalConfig:
     color: Optional[str] = None
     effect: Optional[str] = None
     visual: Optional[ChemicalConcentrationVolumeVisual] = None
-    k_val: float = 0.15
-    depreciation: float = 0.05
+    k_val: float = 0.16
+    depreciation: float = 0.0
 
 
 @dataclass

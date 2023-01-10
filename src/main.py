@@ -3,13 +3,14 @@ import sys
 
 from engine import Engine
 
-from configured_networks.io_network0 import IOSnn0Config
+from configured_networks.io_network1 import IOSnn1Config
 from configured_networks.rate_network0 import RateNetwork0Config
 from configured_networks.defaultnetwork0 import DefaultNetwork0Config
 
 
 # high priority
 
+# TODO: Fix connection probability bug
 # TODO: diffusion grid calculation
 # TODO: in-engine network - configuration/construction
 
@@ -50,8 +51,8 @@ from configured_networks.defaultnetwork0 import DefaultNetwork0Config
 if __name__ == '__main__':
 
     gloo.gl.use_gl('gl+')
-    # eng = Engine(IOSnn0Config())
+    eng = Engine(IOSnn1Config())
     # eng = Engine(RateNetwork0Config())
-    eng = Engine(DefaultNetwork0Config())
+    # eng = Engine(DefaultNetwork0Config())
     if sys.flags.interactive != 1:
         eng.run()

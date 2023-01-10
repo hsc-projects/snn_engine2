@@ -4,7 +4,7 @@ Interactive simulation and visualisation of spatially extended spiking neural ne
 
 Goals:
 - Build "pheromonal (spiking) neural networks" (see concepts bellow).
-- Interactive Research/Deep Learning visualizations (similarly to here: [Neural Network 3D Simulation by Denis Dmitriev (youtube)](https://www.youtube.com/watch?v=3JQ3hYko51Y))
+- Interactive Research/Deep Learning visualizations (similarly to: [Neural Network 3D Simulation by Denis Dmitriev (youtube)](https://youtu.be/3JQ3hYko51Y?t=121))
 
 - Long-term:
   - Proper docs, optimizations, tests, packaging, containerizing, ...
@@ -17,21 +17,30 @@ Goals:
 
 
 
-![sim_main](./docs_src/readme_images/simulator_main.png)
-*Main window. Vertical frames from left to right: 
-collapsible control and object creation elements, 
-main scene with a view of the network, 
+[//]: # (![sim_main]&#40;./docs_src/readme_images/simulator_main.png&#41;)
+[![main_window](./docs_src/readme_images/simulator_main.png)](https://youtu.be/2vCiiNW5yfc)  
+*[Main window (youtube)](https://youtu.be/2vCiiNW5yfc). Vertical frames from left to right:
+collapsible control and object creation elements,
+main scene with a view of the network,
 (optional) second scene displaying information for location based groups,
 second panel with collapsible GUI elements.*
 
-![sim_main](./docs_src/readme_images/simulator_single_neuron_control.png)
-*(Optional) window allowing for the tuning of model variables, 
+[//]: # (![neuron_control]&#40;./docs_src/readme_images/simulator_single_neuron_control.png&#41;)
+[![neuron_control](./docs_src/readme_images/simulator_single_neuron_control.png)](https://youtu.be/p2gC2DhGv3c)  
+*[Neuron conrol panel (youtube)](https://youtu.be/p2gC2DhGv3c) allowing for the tuning of model variables, 
 the control of input current and containing plots for single neurons.
 If not windowed, the panels are integrated in the left panel of the main window.* 
 
 ![sim_main](./docs_src/readme_images/simulator_multiplots.png)
 *(Optional) window for voltage and firing plots of multiple neurons.
 The plot data is updated by CUDA kernels.*
+
+
+[//]: # (![sim_main]&#40;./docs_src/animated/heat_diffusion560p.gif&#41;)
+[![heat_flow](./docs_src/animated/heat_diffusion560p.gif)](https://youtu.be/9zr7D-1vDNY)  
+*[First chemical diffusion implementation (youtube)](https://youtu.be/9zr7D-1vDNY) (as 3D heat flow for concentration values).*
+
+
 
 ## Technical
 
@@ -454,6 +463,11 @@ through processes inherent to **R** and based on energy consumption minimization
 
 ## Sources and Inspirations (incomplete)
 
+#### Videos
+
+|                                         Neural Network 3D Simulation                                         |                                       C++ Ants Simulation 2, Path optimization                                        |
+|:------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------:|
+| [![Watch the video](https://img.youtube.com/vi/3JQ3hYko51Y/default.jpg)](https://youtu.be/3JQ3hYko51Y?t=120) | [![Watch the video](https://img.youtube.com/vi/emRXBr5JvoY/default.jpg)](https://www.youtube.com/watch?v=emRXBr5JvoY) |
 
 #### Collective Intelligence
 
